@@ -221,7 +221,7 @@ fun OrderConfirmedScreen(
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Paid via LPU Wallet",
+                            text = "Paid via MessQ Wallet",
                             fontSize = 12.sp,
                             color = TextSecondary
                         )

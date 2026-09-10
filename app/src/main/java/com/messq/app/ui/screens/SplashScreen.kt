@@ -85,8 +85,8 @@ fun SplashScreen(onNavigateToLogin: () -> Unit) {
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "LPU",
-                            fontSize = 18.sp,
+                            text = "MQ",
+                            fontSize = 22.sp,
                             fontWeight = FontWeight.Black,
                             color = OrangePrimary
                         )
@@ -95,7 +95,7 @@ fun SplashScreen(onNavigateToLogin: () -> Unit) {
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Think Big  Think Different",
+                        text = "Good Food. Smart Ordering.",
                         fontSize = 11.sp,
                         color = Color.White.copy(alpha = 0.8f),
                         textAlign = TextAlign.Center
@@ -168,17 +168,6 @@ fun SplashScreen(onNavigateToLogin: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(bottom = 44.dp)
             ) {
-                Text(
-                    text = "Powered for",
-                    fontSize = 12.sp,
-                    color = Color.White.copy(alpha = 0.6f)
-                )
-                Text(
-                    text = "Lovely Professional University",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White.copy(alpha = 0.85f)
-                )
                 Spacer(modifier = Modifier.height(18.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     repeat(3) { index ->

@@ -617,7 +617,7 @@ private fun Step3Confirm(
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Column {
-                    Text("Payment via LPU Wallet", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                    Text("Payment via MessQ Wallet", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
                     Text("Available balance: Rs. 850", fontSize = 12.sp, color = TextSecondary)
                 }
             }

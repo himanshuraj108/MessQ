@@ -76,8 +76,8 @@ fun LoginScreen(onNavigateToHome: () -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "LPU",
-                    fontSize = 16.sp,
+                    text = "MQ",
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Black,
                     color = OrangePrimary
                 )
@@ -177,7 +177,7 @@ fun LoginScreen(onNavigateToHome: () -> Unit) {
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = {
                             Text(
-                                text = if (selectedTab == 0) "abc@lpu.in" else "staff@lpu.in",
+                                text = if (selectedTab == 0) "student@messq.app" else "staff@messq.app",
                                 color = TextHint
                             )
                         },
@@ -358,25 +358,6 @@ fun LoginScreen(onNavigateToHome: () -> Unit) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Text(
-                text = "LOVELY PROFESSIONAL UNIVERSITY",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextSecondary,
-                letterSpacing = 1.5.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Text(
-                text = "TRANSFORMING EDUCATION TRANSFORMING INDIA",
-                fontSize = 9.sp,
-                color = TextHint,
-                letterSpacing = 1.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
 
             Spacer(modifier = Modifier.height(24.dp))
         }

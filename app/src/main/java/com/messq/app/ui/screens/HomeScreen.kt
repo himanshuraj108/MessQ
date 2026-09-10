@@ -77,8 +77,8 @@ fun HomeScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "LPU",
-                                fontSize = 11.sp,
+                                text = "H",
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Black,
                                 color = OrangePrimary
                             )
