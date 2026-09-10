@@ -34,6 +34,7 @@ import com.messq.app.viewmodel.AuthViewModel
 @Composable
 fun LoginScreen(
     onNavigateToHome: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit = {},
     authViewModel: AuthViewModel = viewModel()
 ) {
     var selectedTab by remember { mutableStateOf(0) }
@@ -307,7 +308,7 @@ fun LoginScreen(
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = OrangePrimary,
-                                    modifier = Modifier.clickable { }
+                                    modifier = Modifier.clickable { onNavigateToForgotPassword() }
                                 )
                             }
                             Spacer(modifier = Modifier.height(24.dp))

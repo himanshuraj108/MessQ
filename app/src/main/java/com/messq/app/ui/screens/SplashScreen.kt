@@ -13,13 +13,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.messq.app.R
 import com.messq.app.ui.theme.*
 import kotlinx.coroutines.delay
 
@@ -30,7 +27,7 @@ fun SplashScreen(onNavigateToLogin: () -> Unit) {
     var bottomVisible by remember { mutableStateOf(false) }
 
     val logoScale by animateFloatAsState(
-        targetValue = if (logoVisible) 1f else 0.4f,
+        targetValue = if (logoVisible) 1f else 0.3f,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessLow
@@ -53,10 +50,7 @@ fun SplashScreen(onNavigateToLogin: () -> Unit) {
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFFF9500),
-                        Color(0xFFE85D00)
-                    )
+                    colors = listOf(Color(0xFFFF9500), OrangePrimary, Color(0xFFE85D00))
                 )
             )
     ) {
@@ -67,7 +61,6 @@ fun SplashScreen(onNavigateToLogin: () -> Unit) {
                 .clip(CircleShape)
                 .background(Color.White.copy(alpha = 0.07f))
         )
-
         Box(
             modifier = Modifier
                 .size(300.dp)
@@ -76,7 +69,6 @@ fun SplashScreen(onNavigateToLogin: () -> Unit) {
                 .clip(CircleShape)
                 .background(Color.White.copy(alpha = 0.06f))
         )
-
         Box(
             modifier = Modifier
                 .size(160.dp)
@@ -96,22 +88,22 @@ fun SplashScreen(onNavigateToLogin: () -> Unit) {
             Box(
                 modifier = Modifier
                     .scale(logoScale)
-                    .shadow(
-                        elevation = 24.dp,
-                        shape = CircleShape,
-                        ambientColor = Color.Black.copy(alpha = 0.3f),
-                        spotColor = Color.Black.copy(alpha = 0.3f)
-                    )
+                    .size(120.dp)
+                    .shadow(24.dp, CircleShape)
+                    .clip(CircleShape)
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
             ) {
-                coil.compose.AsyncImage(
-                    model = R.drawable.messq_logo,
-                    contentDescription = "MessQ Logo",
-                    modifier = Modifier.width(240.dp),
-                    contentScale = ContentScale.Fit
+                Text(
+                    text = "MQ",
+                    fontSize = 42.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = OrangePrimary,
+                    letterSpacing = 1.sp
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             AnimatedVisibility(
                 visible = taglineVisible,
@@ -122,21 +114,25 @@ fun SplashScreen(onNavigateToLogin: () -> Unit) {
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
+                        text = "MessQ",
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.White,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
                         text = "Good Food. Better Days.",
-                        fontSize = 16.sp,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color.White.copy(alpha = 0.9f),
+                        color = Color.White.copy(alpha = 0.85f),
                         textAlign = TextAlign.Center
                     )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "v1.0 Beta",
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = Color.White.copy(alpha = 0.5f),
-                        textAlign = TextAlign.Center
+                        color = Color.White.copy(alpha = 0.5f)
                     )
                 }
             }
@@ -154,11 +150,9 @@ fun SplashScreen(onNavigateToLogin: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 BouncingDotsLoader()
-
                 Text(
                     text = "Preparing your mess experience...",
                     fontSize = 13.sp,
-                    fontWeight = FontWeight.Normal,
                     color = Color.White.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center
                 )
@@ -172,51 +166,34 @@ private fun BouncingDotsLoader() {
     val infiniteTransition = rememberInfiniteTransition(label = "bouncingDots")
 
     val dot1Offset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = -14f,
+        initialValue = 0f, targetValue = -14f,
         animationSpec = infiniteRepeatable(
             animation = keyframes {
                 durationMillis = 900
-                0f at 0 with EaseInOut
-                -14f at 200 with EaseInOut
-                0f at 400 with EaseInOut
-                0f at 900
+                0f at 0; -14f at 200; 0f at 400; 0f at 900
             },
             repeatMode = RepeatMode.Restart
-        ),
-        label = "dot1"
+        ), label = "dot1"
     )
-
     val dot2Offset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = -14f,
+        initialValue = 0f, targetValue = -14f,
         animationSpec = infiniteRepeatable(
             animation = keyframes {
                 durationMillis = 900
-                0f at 150 with EaseInOut
-                -14f at 350 with EaseInOut
-                0f at 550 with EaseInOut
-                0f at 900
+                0f at 150; -14f at 350; 0f at 550; 0f at 900
             },
             repeatMode = RepeatMode.Restart
-        ),
-        label = "dot2"
+        ), label = "dot2"
     )
-
     val dot3Offset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = -14f,
+        initialValue = 0f, targetValue = -14f,
         animationSpec = infiniteRepeatable(
             animation = keyframes {
                 durationMillis = 900
-                0f at 300 with EaseInOut
-                -14f at 500 with EaseInOut
-                0f at 700 with EaseInOut
-                0f at 900
+                0f at 300; -14f at 500; 0f at 700; 0f at 900
             },
             repeatMode = RepeatMode.Restart
-        ),
-        label = "dot3"
+        ), label = "dot3"
     )
 
     Row(

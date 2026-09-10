@@ -73,6 +73,9 @@ fun MessQApp() {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
+                onNavigateToForgotPassword = {
+                    navController.navigate(Screen.ForgotPassword.route)
+                },
                 authViewModel = authViewModel
             )
         }
@@ -173,6 +176,12 @@ fun MessQApp() {
         composable(Screen.OrderHistory.route) {
             OrderHistoryScreen(
                 orderViewModel = orderViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.ForgotPassword.route) {
+            ForgotPasswordScreen(
                 onBack = { navController.popBackStack() }
             )
         }
