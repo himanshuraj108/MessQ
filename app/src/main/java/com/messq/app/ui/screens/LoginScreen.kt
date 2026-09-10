@@ -353,48 +353,7 @@ fun LoginScreen(
                         }
 
                         if (!isRegisterMode) {
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFEEEEEE))
-                                Text(
-                                    text = "  Or continue with  ",
-                                    fontSize = 13.sp,
-                                    color = Color(0xFFBDBDBD)
-                                )
-                                HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFEEEEEE))
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                listOf("G" to Color(0xFF4285F4), "M" to Color(0xFF0078D4), "A" to Color(0xFF050708)) .forEach { (letter, color) ->
-                                    Box(
-                                        modifier = Modifier
-                                            .size(52.dp)
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(12.dp))
-                                            .background(Color.White)
-                                            .clickable { }
-                                            .padding(horizontal = 16.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = letter,
-                                            fontSize = 18.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = color
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                }
-                            }
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
