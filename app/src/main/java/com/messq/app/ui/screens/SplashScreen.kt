@@ -2,7 +2,7 @@ package com.messq.app.ui.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
@@ -10,11 +10,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.messq.app.R
 import com.messq.app.ui.theme.*
 import kotlinx.coroutines.delay
 
@@ -22,12 +27,24 @@ import kotlinx.coroutines.delay
 fun SplashScreen(onNavigateToLogin: () -> Unit) {
     var logoVisible by remember { mutableStateOf(false) }
     var taglineVisible by remember { mutableStateOf(false) }
+    var bottomVisible by remember { mutableStateOf(false) }
+
+    val logoScale by animateFloatAsState(
+        targetValue = if (logoVisible) 1f else 0.4f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "logoScale"
+    )
 
     LaunchedEffect(Unit) {
+        delay(100)
         logoVisible = true
-        delay(400)
+        delay(500)
         taglineVisible = true
-        delay(2200)
+        bottomVisible = true
+        delay(1900)
         onNavigateToLogin()
     }
 
@@ -36,160 +53,184 @@ fun SplashScreen(onNavigateToLogin: () -> Unit) {
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(OrangePrimary, OrangeDark)
+                    colors = listOf(
+                        Color(0xFFFF9500),
+                        Color(0xFFE85D00)
+                    )
                 )
             )
     ) {
         Box(
             modifier = Modifier
-                .size(320.dp)
-                .offset(x = (-90).dp, y = (-90).dp)
+                .size(380.dp)
+                .offset(x = (-80).dp, y = (-80).dp)
                 .clip(CircleShape)
                 .background(Color.White.copy(alpha = 0.07f))
         )
+
         Box(
             modifier = Modifier
-                .size(220.dp)
+                .size(300.dp)
                 .align(Alignment.BottomEnd)
-                .offset(x = 70.dp, y = 70.dp)
+                .offset(x = 80.dp, y = 80.dp)
                 .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.07f))
+                .background(Color.White.copy(alpha = 0.06f))
         )
+
         Box(
             modifier = Modifier
-                .size(130.dp)
+                .size(160.dp)
                 .align(Alignment.BottomStart)
-                .offset(x = 30.dp, y = (-100).dp)
+                .offset(x = (-40).dp, y = 60.dp)
                 .clip(CircleShape)
                 .background(Color.White.copy(alpha = 0.05f))
         )
 
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            Box(
+                modifier = Modifier
+                    .scale(logoScale)
+                    .shadow(
+                        elevation = 24.dp,
+                        shape = CircleShape,
+                        ambientColor = Color.Black.copy(alpha = 0.3f),
+                        spotColor = Color.Black.copy(alpha = 0.3f)
+                    )
+            ) {
+                coil.compose.AsyncImage(
+                    model = R.drawable.messq_logo,
+                    contentDescription = "MessQ Logo",
+                    modifier = Modifier.width(240.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             AnimatedVisibility(
-                visible = logoVisible,
-                enter = scaleIn(
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
-                ) + fadeIn()
+                visible = taglineVisible,
+                enter = fadeIn(animationSpec = tween(600)) + slideInVertically(
+                    animationSpec = tween(600),
+                    initialOffsetY = { it / 2 }
+                )
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
-                    Box(
-                        modifier = Modifier
-                            .size(72.dp)
-                            .clip(CircleShape)
-                            .background(Color.White),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "MQ",
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Black,
-                            color = OrangePrimary
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "Good Food. Smart Ordering.",
-                        fontSize = 11.sp,
-                        color = Color.White.copy(alpha = 0.8f),
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(44.dp))
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "Mess",
-                            fontSize = 54.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color.White
-                        )
-                        Box(
-                            modifier = Modifier
-                                .size(54.dp)
-                                .clip(CircleShape)
-                                .background(Color.White),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Q",
-                                fontSize = 34.sp,
-                                fontWeight = FontWeight.Black,
-                                color = OrangePrimary
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
                     Text(
                         text = "Good Food. Better Days.",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color.White.copy(alpha = 0.9f),
-                        letterSpacing = 0.5.sp
+                        textAlign = TextAlign.Center
                     )
-                }
-            }
 
-            Spacer(modifier = Modifier.height(80.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-            AnimatedVisibility(
-                visible = taglineVisible,
-                enter = slideInVertically(initialOffsetY = { 40 }) + fadeIn()
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "A Smarter Mess Experience",
-                        fontSize = 14.sp,
-                        color = Color.White.copy(alpha = 0.8f)
-                    )
-                    Text(
-                        text = "for a Healthier You",
-                        fontSize = 14.sp,
-                        color = Color.White.copy(alpha = 0.8f)
+                        text = "v1.0 Beta",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.White.copy(alpha = 0.5f),
+                        textAlign = TextAlign.Center
                     )
                 }
             }
         }
 
         AnimatedVisibility(
-            visible = taglineVisible,
-            modifier = Modifier.align(Alignment.BottomCenter),
-            enter = fadeIn()
+            visible = bottomVisible,
+            enter = fadeIn(animationSpec = tween(800, delayMillis = 200)),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 64.dp)
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(bottom = 44.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Spacer(modifier = Modifier.height(18.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    repeat(3) { index ->
-                        val infiniteTransition = rememberInfiniteTransition(label = "dot")
-                        val alpha by infiniteTransition.animateFloat(
-                            initialValue = 0.3f,
-                            targetValue = 1f,
-                            animationSpec = infiniteRepeatable(
-                                animation = tween(500, delayMillis = index * 150),
-                                repeatMode = RepeatMode.Reverse
-                            ),
-                            label = "alpha"
-                        )
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(alpha = alpha))
-                        )
-                    }
-                }
+                BouncingDotsLoader()
+
+                Text(
+                    text = "Preparing your mess experience...",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = Color.White.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center
+                )
             }
+        }
+    }
+}
+
+@Composable
+private fun BouncingDotsLoader() {
+    val infiniteTransition = rememberInfiniteTransition(label = "bouncingDots")
+
+    val dot1Offset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -14f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 900
+                0f at 0 with EaseInOut
+                -14f at 200 with EaseInOut
+                0f at 400 with EaseInOut
+                0f at 900
+            },
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "dot1"
+    )
+
+    val dot2Offset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -14f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 900
+                0f at 150 with EaseInOut
+                -14f at 350 with EaseInOut
+                0f at 550 with EaseInOut
+                0f at 900
+            },
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "dot2"
+    )
+
+    val dot3Offset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -14f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 900
+                0f at 300 with EaseInOut
+                -14f at 500 with EaseInOut
+                0f at 700 with EaseInOut
+                0f at 900
+            },
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "dot3"
+    )
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        listOf(dot1Offset, dot2Offset, dot3Offset).forEach { offset ->
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .offset(y = offset.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.85f))
+            )
         }
     }
 }

@@ -21,23 +21,30 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.messq.app.data.CrowdLevel
 import com.messq.app.data.MessQData
 import com.messq.app.navigation.CartState
 import com.messq.app.ui.components.MessQBottomNav
 import com.messq.app.ui.theme.*
+import com.messq.app.viewmodel.HomeViewModel
 
 @Composable
 fun HomeScreen(
     cartState: CartState,
+    homeViewModel: HomeViewModel,
     onNavigateToQueue: () -> Unit,
     onNavigateToMenu: () -> Unit,
     onNavigateToPreOrder: () -> Unit,
     onNavigateToOrderHistory: () -> Unit,
     onNavigateToAssistant: () -> Unit,
+    onLogout: () -> Unit,
     currentRoute: String,
     onNavigate: (String) -> Unit
 ) {
+    val queueStatus by homeViewModel.queueStatus.collectAsStateWithLifecycle()
+    val userName by homeViewModel.userName.collectAsStateWithLifecycle()
+    val walletBalance by homeViewModel.walletBalance.collectAsStateWithLifecycle()
     val mainMess = MessQData.messLocations.first { it.isMain }
 
     Scaffold(

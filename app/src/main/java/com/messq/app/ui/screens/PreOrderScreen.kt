@@ -23,11 +23,13 @@ import com.messq.app.data.SlotStatus
 import com.messq.app.data.TimeSlot
 import com.messq.app.navigation.CartState
 import com.messq.app.ui.theme.*
+import com.messq.app.viewmodel.OrderViewModel
 
 @Composable
 fun PreOrderScreen(
     cartState: CartState,
-    onNavigateToOrderConfirmed: () -> Unit,
+    orderViewModel: OrderViewModel,
+    onNavigateToOrderConfirmed: (slot: String, date: String) -> Unit,
     onBack: () -> Unit
 ) {
     var currentStep by remember { mutableStateOf(1) }
@@ -87,8 +89,10 @@ fun PreOrderScreen(
                 selectedSlot = selectedSlot,
                 selectedDateIndex = selectedDateIndex,
                 onConfirmOrder = {
-                    onNavigateToOrderConfirmed()
-                    cartState.clear()
+                    val slotTime = selectedSlot?.timeRange ?: "12:00 - 12:30 PM"
+                    val dateStr = if (selectedDateIndex == 0) "Today" else "Tomorrow"
+                    orderViewModel.placeOrder(cartState.items.toList(), slotTime, dateStr, cartState.totalAmount)
+                    onNavigateToOrderConfirmed(slotTime, dateStr)
                 },
                 paddingValues = paddingValues
             )

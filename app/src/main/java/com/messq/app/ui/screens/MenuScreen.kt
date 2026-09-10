@@ -20,22 +20,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.messq.app.data.MealCategory
 import com.messq.app.data.MenuItem
 import com.messq.app.data.MessQData
 import com.messq.app.navigation.CartState
 import com.messq.app.ui.components.MessQBottomNav
 import com.messq.app.ui.theme.*
+import com.messq.app.viewmodel.MenuViewModel
 
 @Composable
 fun MenuScreen(
     cartState: CartState,
+    menuViewModel: MenuViewModel,
     onNavigateToPreOrder: () -> Unit,
     onBack: () -> Unit,
     currentRoute: String,
     onNavigate: (String) -> Unit
 ) {
+    val firestoreItems by menuViewModel.menuItems.collectAsStateWithLifecycle()
     var selectedCategory by remember { mutableStateOf(MealCategory.BREAKFAST) }
+
     var changeDate by remember { mutableStateOf(false) }
 
     val items = when (selectedCategory) {

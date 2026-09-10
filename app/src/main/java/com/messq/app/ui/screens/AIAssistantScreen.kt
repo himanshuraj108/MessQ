@@ -10,10 +10,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material.icons.automirrored.outlined.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.outlined.SupportAgent
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,48 +23,37 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.messq.app.data.ChatMessage
-import com.messq.app.data.MessQData
 import com.messq.app.ui.theme.*
-import kotlinx.coroutines.delay
+import com.messq.app.viewmodel.ChatViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun AIAssistantScreen(onBack: () -> Unit) {
-    val messages = remember {
-        mutableStateListOf(
-            ChatMessage(
-                text = "Hello Himanshu! I am MessQ Assistant. I can help you with today's menu, crowd status, slot booking, and nutrition info. How can I help you?",
-                isUser = false
-            )
-        )
-    }
+fun AIAssistantScreen(
+    onBack: () -> Unit,
+    chatViewModel: ChatViewModel = viewModel()
+) {
+    val messages = chatViewModel.messages
+    val isTyping by chatViewModel.isTyping.collectAsStateWithLifecycle()
     var inputText by remember { mutableStateOf("") }
-    var isTyping by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
-    fun sendMessage(text: String) {
-        if (text.isBlank()) return
-        messages.add(ChatMessage(text = text, isUser = true))
-        inputText = ""
-        isTyping = true
-        scope.launch {
-            listState.animateScrollToItem(messages.size - 1)
-            delay(1200)
-            isTyping = false
-            val reply = when {
-                text.contains("breakfast", ignoreCase = true) -> MessQData.assistantReplies["breakfast"]
-                text.contains("crowd", ignoreCase = true) || text.contains("wait", ignoreCase = true) -> MessQData.assistantReplies["crowd"]
-                text.contains("slot", ignoreCase = true) || text.contains("book", ignoreCase = true) -> MessQData.assistantReplies["slot"]
-                text.contains("veg", ignoreCase = true) -> MessQData.assistantReplies["veg"]
-                text.contains("nutrition", ignoreCase = true) || text.contains("paneer", ignoreCase = true) -> MessQData.assistantReplies["nutrition"]
-                else -> MessQData.assistantReplies["default"]
-            } ?: MessQData.assistantReplies["default"]!!
-            messages.add(ChatMessage(text = reply, isUser = false))
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.size - 1)
         }
     }
+
+    val quickReplies = listOf(
+        "Today's breakfast?",
+        "Current crowd?",
+        "Book a slot",
+        "Veg options",
+        "Nutrition info"
+    )
 
     Scaffold(
         topBar = {
@@ -111,13 +99,13 @@ fun AIAssistantScreen(onBack: () -> Unit) {
                                 modifier = Modifier
                                     .size(7.dp)
                                     .clip(CircleShape)
-                                    .background(LowCrowd)
+                                    .background(if (isTyping) OrangePrimary else LowCrowd)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "Online",
+                                text = if (isTyping) "Typing..." else "Online",
                                 fontSize = 12.sp,
-                                color = LowCrowd,
+                                color = if (isTyping) OrangePrimary else LowCrowd,
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -136,24 +124,23 @@ fun AIAssistantScreen(onBack: () -> Unit) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = PaddingValues(bottom = 10.dp)
                     ) {
-                        items(MessQData.assistantReplies.keys.take(4).toList()) { key ->
-                            val label = when (key) {
-                                "breakfast" -> "Today's breakfast?"
-                                "crowd" -> "Current crowd?"
-                                "slot" -> "Book a slot"
-                                "veg" -> "Veg options"
-                                else -> key
-                            }
+                        items(quickReplies) { reply ->
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(20.dp))
                                     .border(1.dp, OrangePrimary.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
                                     .background(OrangeBackground)
-                                    .clickable { sendMessage(label) }
+                                    .clickable {
+                                        chatViewModel.sendMessage(reply)
+                                        scope.launch {
+                                            kotlinx.coroutines.delay(300)
+                                            if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1)
+                                        }
+                                    }
                                     .padding(horizontal = 14.dp, vertical = 7.dp)
                             ) {
                                 Text(
-                                    text = label,
+                                    text = reply,
                                     fontSize = 12.sp,
                                     color = OrangePrimary,
                                     fontWeight = FontWeight.Medium
@@ -185,8 +172,13 @@ fun AIAssistantScreen(onBack: () -> Unit) {
                             modifier = Modifier
                                 .size(48.dp)
                                 .clip(CircleShape)
-                                .background(OrangePrimary)
-                                .clickable { sendMessage(inputText) },
+                                .background(if (isTyping) TextSecondary else OrangePrimary)
+                                .clickable(enabled = !isTyping) {
+                                    if (inputText.isNotBlank()) {
+                                        chatViewModel.sendMessage(inputText)
+                                        inputText = ""
+                                    }
+                                },
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -214,9 +206,7 @@ fun AIAssistantScreen(onBack: () -> Unit) {
                 ChatBubble(message = message)
             }
             if (isTyping) {
-                item {
-                    TypingIndicator()
-                }
+                item { TypingIndicatorBubble() }
             }
         }
     }
@@ -278,8 +268,8 @@ private fun ChatBubble(message: ChatMessage) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "H",
-                    fontSize = 14.sp,
+                    text = "Me",
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = OrangePrimary
                 )
@@ -289,7 +279,7 @@ private fun ChatBubble(message: ChatMessage) {
 }
 
 @Composable
-private fun TypingIndicator() {
+private fun TypingIndicatorBubble() {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             modifier = Modifier
@@ -336,5 +326,3 @@ private fun TypingIndicator() {
         }
     }
 }
-
-
