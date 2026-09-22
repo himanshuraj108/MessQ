@@ -1,13 +1,14 @@
 {
   "project_info": {
-    "project_number": "000000000000",
-    "project_id": "messq-app-replace-me",
-    "storage_bucket": "messq-app-replace-me.appspot.com"
+    "project_number": "960615195163",
+    "firebase_url": "https://messq-97744-default-rtdb.firebaseio.com",
+    "project_id": "messq-97744",
+    "storage_bucket": "messq-97744.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+        "mobilesdk_app_id": "1:960615195163:android:65ff9d93fb518b08880ebe",
         "android_client_info": {
           "package_name": "com.messq.app"
         }
@@ -15,7 +16,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "REPLACE_WITH_YOUR_FIREBASE_API_KEY"
+          "current_key": "AIzaSyAiOAMSAwpqwdRW8GCgcMuQw7eW2NJ9Pgg"
         }
       ],
       "services": {
