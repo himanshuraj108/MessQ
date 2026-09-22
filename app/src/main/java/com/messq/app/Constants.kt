@@ -1,7 +1,7 @@
 package com.messq.app
 
 object Constants {
-    const val GROQ_API_KEY = "YOUR_GROQ_API_KEY_HERE"
+    val GROQ_API_KEY: String = BuildConfig.GROQ_API_KEY.ifEmpty { "YOUR_GROQ_API_KEY_HERE" }
     const val GROQ_BASE_URL = "https://api.groq.com/openai/v1/"
     const val GROQ_MODEL = "llama-3.3-70b-versatile"
 
