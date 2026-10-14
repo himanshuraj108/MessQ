@@ -28,7 +28,12 @@ class MenuRepository {
                         isVeg = doc.getBoolean("isVeg") ?: true,
                         quantity = doc.getString("quantity") ?: "1 plate",
                         category = categoryFromString(doc.getString("category") ?: "breakfast"),
-                        colorHex = doc.getLong("colorHex") ?: 0xFFE8D5A3
+                        colorHex = doc.getLong("colorHex") ?: 0xFFE8D5A3,
+                        imageUrl = doc.getString("imageUrl") ?: "",
+                        calories = doc.getLong("calories")?.toInt() ?: 300,
+                        proteinGrams = doc.getLong("proteinGrams")?.toInt() ?: 10,
+                        prepTimeMinutes = doc.getLong("prepTimeMinutes")?.toInt() ?: 5,
+                        tag = doc.getString("tag") ?: ""
                     )
                 } catch (e: Exception) { null }
             }

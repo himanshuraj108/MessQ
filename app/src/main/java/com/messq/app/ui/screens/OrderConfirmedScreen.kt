@@ -1,7 +1,8 @@
 package com.messq.app.ui.screens
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -9,10 +10,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.*
-import androidx.compose.material.icons.automirrored.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,291 +19,313 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.messq.app.navigation.CartState
+import com.messq.app.data.CartItem
 import com.messq.app.ui.theme.*
-import kotlinx.coroutines.delay
 
 @Composable
 fun OrderConfirmedScreen(
-    cartItems: List<com.messq.app.data.CartItem>,
+    cartItems: List<CartItem>,
     totalAmount: Int,
     onViewOrders: () -> Unit,
     onBackToHome: () -> Unit
 ) {
-    var animationStarted by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        delay(200)
-        animationStarted = true
-    }
-
-    val scale by animateFloatAsState(
-        targetValue = if (animationStarted) 1f else 0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "checkmark"
+    var animationTrigger by remember { mutableStateOf(false) }
+    val checkmarkScale by animateFloatAsState(
+        targetValue = if (animationTrigger) 1f else 0.2f,
+        animationSpec = spring(dampingRatio = 0.5f, stiffness = 300f),
+        label = "checkScale"
     )
 
-    val orderId = "MQ202606160123"
-    val pickupSlot = "Today, 09:00 - 09:30 AM"
+    val randomTokenId = remember {
+        val chars = "ABCDEFGHJKLMNPQRSTUVWXYZ"
+        val letters = (1..2).map { chars.random() }.joinToString("")
+        val digits = (100..999).random()
+        "MQ-$letters$digits"
+    }
 
-    Scaffold(containerColor = WarmWhite) { paddingValues ->
+    LaunchedEffect(Unit) {
+        animationTrigger = true
+    }
+
+    Scaffold(
+        bottomBar = {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = CardBackground,
+                shadowElevation = 8.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .navigationBarsPadding()
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Button(
+                        onClick = onViewOrders,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
+                    ) {
+                        Icon(Icons.Outlined.ReceiptLong, contentDescription = null, tint = Color.White)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "View Digital Token & Receipt",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = onBackToHome,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.5.dp, OrangePrimary)
+                    ) {
+                        Text(
+                            text = "Back to Campus Home",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = OrangePrimary
+                        )
+                    }
+                }
+            }
+        },
+        containerColor = WarmWhite
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp),
+                .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Box(
                 modifier = Modifier
                     .size(100.dp)
-                    .scale(scale)
                     .clip(CircleShape)
-                    .background(LowCrowd.copy(alpha = 0.15f)),
+                    .background(SuccessGreen.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
                 Box(
                     modifier = Modifier
-                        .size(78.dp)
+                        .size(76.dp)
+                        .scale(checkmarkScale)
                         .clip(CircleShape)
-                        .background(LowCrowd),
+                        .background(SuccessGreen),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Check,
-                        contentDescription = null,
+                        contentDescription = "Success",
                         tint = Color.White,
                         modifier = Modifier.size(44.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
-            repeat(6) { i ->
-                val particleScale by animateFloatAsState(
-                    targetValue = if (animationStarted) 1f else 0f,
-                    animationSpec = tween(
-                        durationMillis = 600,
-                        delayMillis = 200 + i * 80
-                    ),
-                    label = "particle$i"
-                )
-            }
+            Text(
+                text = "Order Placed Successfully",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Black,
+                color = TextPrimary
+            )
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            AnimatedVisibility(
-                visible = animationStarted,
-                enter = fadeIn() + slideInVertically(initialOffsetY = { 30 })
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "Order Confirmed!",
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Black,
-                        color = TextPrimary
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Your food has been pre-ordered successfully.",
-                        fontSize = 14.sp,
-                        color = TextSecondary
-                    )
-                }
-            }
+            Text(
+                text = "Your meal token has been generated and sent to the kitchen",
+                fontSize = 13.sp,
+                color = TextSecondary
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            AnimatedVisibility(
-                visible = animationStarted,
-                enter = fadeIn(animationSpec = tween(delayMillis = 300)) + slideInVertically(initialOffsetY = { 40 })
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(22.dp),
+                colors = CardDefaults.cardColors(containerColor = CardBackground),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
             ) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = CardBackground),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                Column(
+                    modifier = Modifier.padding(22.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Order ID", fontSize = 13.sp, color = TextSecondary)
-                            Text(
-                                text = "#$orderId",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                    Text(
+                        text = "DIGITAL MEAL TOKEN",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 2.sp,
+                        color = TextSecondary
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = "#$randomTokenId",
+                        fontSize = 36.sp,
+                        fontWeight = FontWeight.Black,
+                        fontFamily = FontFamily.Monospace,
+                        color = OrangePrimary
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Surface(
+                        modifier = Modifier
+                            .size(140.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        color = Color.White,
+                        border = BorderStroke(1.5.dp, Divider)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Outlined.QrCode2,
+                                contentDescription = null,
+                                tint = TextPrimary,
+                                modifier = Modifier.size(120.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Pickup Slot", fontSize = 13.sp, color = TextSecondary)
-                            Text(
-                                text = pickupSlot,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
-                            )
-                        }
-
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Divider)
-
-                        Text("Items", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        if (cartItems.isEmpty()) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Aloo Paratha  x1", fontSize = 14.sp, color = TextPrimary)
-                                Text("Rs. 30", fontSize = 14.sp, color = TextPrimary)
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Masala Dosa  x1", fontSize = 14.sp, color = TextPrimary)
-                                Text("Rs. 35", fontSize = 14.sp, color = TextPrimary)
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Filter Coffee  x1", fontSize = 14.sp, color = TextPrimary)
-                                Text("Rs. 15", fontSize = 14.sp, color = TextPrimary)
-                            }
-                        } else {
-                            cartItems.forEach { cartItem ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 3.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("${cartItem.menuItem.name}  x${cartItem.quantity}", fontSize = 14.sp, color = TextPrimary)
-                                    Text("Rs. ${cartItem.menuItem.price * cartItem.quantity}", fontSize = 14.sp, color = TextPrimary)
-                                }
-                            }
-                        }
-
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Divider)
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Total Amount", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                            Text(
-                                text = "Rs. ${if (totalAmount == 0) 85 else totalAmount}",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = OrangePrimary
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Paid via MessQ Wallet",
-                            fontSize = 12.sp,
-                            color = TextSecondary
-                        )
                     }
-                }
-            }
 
-            Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-            AnimatedVisibility(
-                visible = animationStarted,
-                enter = fadeIn(animationSpec = tween(delayMillis = 500))
-            ) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = OrangeBackground),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, OrangePrimary.copy(alpha = 0.3f))
-                ) {
+                    Text(
+                        text = "Show this QR code at Counter 2 to pick up meal",
+                        fontSize = 11.sp,
+                        color = TextHint
+                    )
+
+                    Spacer(modifier = Modifier.height(18.dp))
+                    HorizontalDivider(color = Divider)
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    OrderTimelineTracker()
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                    HorizontalDivider(color = Divider)
+                    Spacer(modifier = Modifier.height(14.dp))
+
                     Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Notifications,
-                            contentDescription = null,
-                            tint = OrangePrimary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "You will receive a notification when your order is ready.",
-                            fontSize = 13.sp,
-                            color = TextPrimary
-                        )
+                        Text("Amount Paid via Wallet", fontSize = 13.sp, color = TextSecondary)
+                        Text("Rs. $totalAmount", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Dining Hall", fontSize = 13.sp, color = TextSecondary)
+                        Text("Central Mess (Block A)", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(20.dp))
+        }
+    }
+}
 
-            AnimatedVisibility(
-                visible = animationStarted,
-                enter = fadeIn(animationSpec = tween(delayMillis = 600)) + slideInVertically(initialOffsetY = { 30 })
+@Composable
+private fun OrderTimelineTracker() {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        TimelineItem(
+            title = "Order Confirmed",
+            time = "Just now",
+            isCompleted = true,
+            isCurrent = false
+        )
+        TimelineItem(
+            title = "Preparing in Kitchen",
+            time = "Chef assigned",
+            isCompleted = false,
+            isCurrent = true
+        )
+        TimelineItem(
+            title = "Ready for Counter Pickup",
+            time = "Est. 10 mins",
+            isCompleted = false,
+            isCurrent = false,
+            isLast = true
+        )
+    }
+}
+
+@Composable
+private fun TimelineItem(
+    title: String,
+    time: String,
+    isCompleted: Boolean,
+    isCurrent: Boolean,
+    isLast: Boolean = false
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .clip(CircleShape)
+                    .background(
+                        when {
+                            isCompleted -> SuccessGreen
+                            isCurrent -> OrangePrimary
+                            else -> Divider
+                        }
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                Column {
-                    OutlinedButton(
-                        onClick = onViewOrders,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.5.dp, OrangePrimary)
-                    ) {
-                        Text(
-                            text = "View Orders",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = OrangePrimary
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Button(
-                        onClick = onBackToHome,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
-                    ) {
-                        Text(
-                            text = "Back to Home",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
+                if (isCompleted) {
+                    Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            if (!isLast) {
+                Box(
+                    modifier = Modifier
+                        .width(2.dp)
+                        .height(24.dp)
+                        .background(if (isCompleted) SuccessGreen else Divider)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = title,
+                fontSize = 13.sp,
+                fontWeight = if (isCurrent || isCompleted) FontWeight.Bold else FontWeight.Normal,
+                color = if (isCurrent) OrangePrimary else TextPrimary
+            )
+            Text(
+                text = time,
+                fontSize = 11.sp,
+                color = TextSecondary
+            )
         }
     }
 }

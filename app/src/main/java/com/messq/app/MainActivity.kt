@@ -46,7 +46,7 @@ fun MessQApp() {
     val orderViewModel: OrderViewModel = viewModel()
 
     var confirmedCartItems by remember { mutableStateOf(listOf<com.messq.app.data.CartItem>()) }
-    var confirmedTotalAmount by remember { mutableStateOf(0) }
+    var confirmedTotalAmount by remember { mutableIntStateOf(0) }
     var confirmedSlot by remember { mutableStateOf("") }
     var confirmedDate by remember { mutableStateOf("") }
 
@@ -89,6 +89,8 @@ fun MessQApp() {
                 onNavigateToPreOrder = { navController.navigate(Screen.PreOrder.route) },
                 onNavigateToOrderHistory = { navController.navigate(Screen.OrderHistory.route) },
                 onNavigateToAssistant = { navController.navigate(Screen.AIAssistant.route) },
+                onNavigateToWallet = { navController.navigate(Screen.Wallet.route) },
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate(Screen.Login.route) {
@@ -122,10 +124,12 @@ fun MessQApp() {
                 onBack = { navController.popBackStack() },
                 currentRoute = currentRoute,
                 onNavigate = { route ->
-                    navController.navigate(route) {
-                        popUpTo(Screen.Home.route) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
+                    if (route != currentRoute) {
+                        navController.navigate(route) {
+                            popUpTo(Screen.Home.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 }
             )
@@ -177,6 +181,50 @@ fun MessQApp() {
             OrderHistoryScreen(
                 orderViewModel = orderViewModel,
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Wallet.route) {
+            WalletScreen(
+                cartState = cartState,
+                homeViewModel = homeViewModel,
+                onBack = { navController.popBackStack() },
+                currentRoute = currentRoute,
+                onNavigate = { route ->
+                    if (route != currentRoute) {
+                        navController.navigate(route) {
+                            popUpTo(Screen.Home.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Profile.route) {
+            ProfileScreen(
+                cartState = cartState,
+                authViewModel = authViewModel,
+                onNavigateToOrderHistory = { navController.navigate(Screen.OrderHistory.route) },
+                onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) },
+                onLogout = {
+                    authViewModel.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onBack = { navController.popBackStack() },
+                currentRoute = currentRoute,
+                onNavigate = { route ->
+                    if (route != currentRoute) {
+                        navController.navigate(route) {
+                            popUpTo(Screen.Home.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                }
             )
         }
 

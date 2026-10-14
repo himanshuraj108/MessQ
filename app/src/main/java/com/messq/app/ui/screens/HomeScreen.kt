@@ -1,31 +1,45 @@
 package com.messq.app.ui.screens
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.outlined.*
-import androidx.compose.material.icons.automirrored.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.*
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.messq.app.data.CrowdLevel
+import com.messq.app.data.MenuItem
+import com.messq.app.data.MessLocation
 import com.messq.app.data.MessQData
 import com.messq.app.navigation.CartState
+import com.messq.app.navigation.Screen
+import com.messq.app.ui.components.DietaryBadge
+import com.messq.app.ui.components.FoodThumbnail
 import com.messq.app.ui.components.MessQBottomNav
+import com.messq.app.ui.components.QuantityStepper
 import com.messq.app.ui.theme.*
 import com.messq.app.viewmodel.HomeViewModel
 
@@ -38,6 +52,8 @@ fun HomeScreen(
     onNavigateToPreOrder: () -> Unit,
     onNavigateToOrderHistory: () -> Unit,
     onNavigateToAssistant: () -> Unit,
+    onNavigateToWallet: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onLogout: () -> Unit,
     currentRoute: String,
     onNavigate: (String) -> Unit
@@ -45,11 +61,18 @@ fun HomeScreen(
     val queueStatus by homeViewModel.queueStatus.collectAsStateWithLifecycle()
     val userName by homeViewModel.userName.collectAsStateWithLifecycle()
     val walletBalance by homeViewModel.walletBalance.collectAsStateWithLifecycle()
+    var searchQuery by remember { mutableStateOf("") }
+
     val mainMess = MessQData.messLocations.first { it.isMain }
+    val featuredDishes = remember { MessQData.allMenuItems.filter { it.tag.isNotEmpty() }.take(6) }
 
     Scaffold(
         bottomBar = {
-            MessQBottomNav(currentRoute = currentRoute, onNavigate = onNavigate)
+            MessQBottomNav(
+                currentRoute = currentRoute,
+                cartItemCount = cartState.totalItems,
+                onNavigate = onNavigate
+            )
         },
         containerColor = WarmWhite
     ) { paddingValues ->
@@ -64,291 +87,243 @@ fun HomeScreen(
                     .fillMaxWidth()
                     .background(
                         brush = Brush.verticalGradient(
-                            colors = listOf(OrangePrimary, OrangeDark),
-                            endY = 200f
+                            colors = listOf(
+                                Color(0xFFE85D00),
+                                OrangePrimary,
+                                Color(0xFFFB923C)
+                            )
                         )
                     )
+                    .statusBarsPadding()
                     .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .background(Color.White),
-                            contentAlignment = Alignment.Center
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.clickable(onClick = onNavigateToProfile)
                         ) {
-                            Text(
-                                text = "H",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Black,
-                                color = OrangePrimary
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = "Good Morning,",
-                                fontSize = 13.sp,
-                                color = Color.White.copy(alpha = 0.85f)
-                            )
-                            Text(
-                                text = "Himanshu",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = {}) {
-                            Box {
-                                Icon(
-                                    imageVector = Icons.Outlined.Notifications,
-                                    contentDescription = "Notifications",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(26.dp)
+                            Box(
+                                modifier = Modifier
+                                    .size(46.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = userName.take(1).ifEmpty { "H" },
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = OrangePrimary
                                 )
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .clip(CircleShape)
-                                        .background(HighCrowd)
-                                        .align(Alignment.TopEnd)
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Welcome Back,",
+                                    fontSize = 12.sp,
+                                    color = Color.White.copy(alpha = 0.85f)
+                                )
+                                Text(
+                                    text = if (userName == "Student") "Himanshu Raj" else userName,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = "${MessQData.studentProfile.hostelBlock} • ${MessQData.studentProfile.roomNo}",
+                                    fontSize = 11.sp,
+                                    color = Color.White.copy(alpha = 0.9f)
                                 )
                             }
                         }
-                        Box(
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.25f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "H",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-                    }
-                }
-            }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .offset(y = (-1).dp)
-            ) {
-                OutlinedTextField(
-                    value = "",
-                    onValueChange = {},
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Search for food, menu, or category...", color = TextHint, fontSize = 14.sp) },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Outlined.Search,
-                            contentDescription = null,
-                            tint = TextSecondary
-                        )
-                    },
-                    shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Divider,
-                        focusedBorderColor = OrangePrimary,
-                        unfocusedContainerColor = CardBackground,
-                        focusedContainerColor = CardBackground
-                    ),
-                    singleLine = true
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .height(140.dp),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = OrangePrimary)
-            ) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Box(
-                        modifier = Modifier
-                            .size(120.dp)
-                            .align(Alignment.TopEnd)
-                            .offset(x = 30.dp, y = (-30).dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.1f))
-                    )
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .padding(20.dp)
-                    ) {
-                        Text(
-                            text = "Good Food",
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color.White
-                        )
-                        Text(
-                            text = "Fuels Great Ideas",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
-                        Text(
-                            text = "Healthy Meals for a Brighter Tomorrow",
-                            fontSize = 12.sp,
-                            color = Color.White.copy(alpha = 0.75f)
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color.White)
-                                .clickable { onNavigateToMenu() }
-                                .padding(horizontal = 14.dp, vertical = 6.dp)
-                        ) {
-                            Text(
-                                text = "View Today's Menu  →",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = OrangePrimary
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = CardBackground),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "Current Mess Crowd",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(LowCrowd.copy(alpha = 0.15f))
-                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = Color.White.copy(alpha = 0.2f),
+                                modifier = Modifier.clickable(onClick = onNavigateToWallet)
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(6.dp)
-                                            .clip(CircleShape)
-                                            .background(LowCrowd)
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.AccountBalanceWallet,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(16.dp)
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = "Live",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = LowCrowd
+                                        text = "Rs. ${if (walletBalance == 0) 500 else walletBalance}",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
                                     )
                                 }
                             }
-                        }
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Filled.People,
-                                contentDescription = null,
-                                tint = OrangePrimary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "${mainMess.waitTimeMin} – ${mainMess.waitTimeMax} min",
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-                        }
-                        Text(
-                            text = "Estimated wait time • Main Mess, Block A",
-                            fontSize = 12.sp,
-                            color = TextSecondary
-                        )
-                    }
-                    MiniCrowdBars()
-                }
-            }
 
-            Spacer(modifier = Modifier.height(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
 
-            Text(
-                text = "Quick Actions",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary,
-                modifier = Modifier.padding(horizontal = 20.dp)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            val actions = listOf(
-                Triple("Pre-Order", Icons.Outlined.ShoppingCart, { onNavigateToPreOrder() }),
-                Triple("Book Slot", Icons.Outlined.CalendarMonth, { onNavigateToQueue() }),
-                Triple("Menu", Icons.AutoMirrored.Outlined.MenuBook, { onNavigateToMenu() }),
-                Triple("Order History", Icons.Outlined.History, { onNavigateToOrderHistory() }),
-                Triple("Feedback", Icons.Outlined.StarOutline, {}),
-                Triple("Assistant", Icons.Outlined.SupportAgent, { onNavigateToAssistant() })
-            )
-
-            Column(
-                modifier = Modifier.padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                actions.chunked(3).forEach { rowActions ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        rowActions.forEach { (label, icon, action) ->
-                            QuickActionCard(
-                                label = label,
-                                icon = icon,
-                                onClick = action,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        if (rowActions.size < 3) {
-                            repeat(3 - rowActions.size) {
-                                Spacer(modifier = Modifier.weight(1f))
+                            IconButton(
+                                onClick = onNavigateToProfile,
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White.copy(alpha = 0.2f))
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.QrCodeScanner,
+                                    contentDescription = "QR Pass",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
                             }
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .clickable(onClick = onNavigateToMenu),
+                        shape = RoundedCornerShape(14.dp),
+                        color = CardBackground,
+                        shadowElevation = 4.dp
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Outlined.Search, contentDescription = null, tint = OrangePrimary)
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = "Search dishes, thalis, snacks...",
+                                fontSize = 13.sp,
+                                color = TextHint
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            LiveCrowdStatusHeroCard(
+                location = mainMess,
+                currentCount = if (queueStatus.currentCount > 0) queueStatus.currentCount else mainMess.currentOccupancy,
+                maxCapacity = if (queueStatus.maxCapacity > 0) queueStatus.maxCapacity else mainMess.maxCapacity,
+                waitTimeMin = mainMess.waitTimeMin,
+                waitTimeMax = mainMess.waitTimeMax,
+                onViewDetails = onNavigateToQueue
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            QuickActionGrid(
+                onNavigateToPreOrder = onNavigateToPreOrder,
+                onNavigateToMenu = onNavigateToMenu,
+                onNavigateToQueue = onNavigateToQueue,
+                onNavigateToAssistant = onNavigateToAssistant,
+                onNavigateToWallet = onNavigateToWallet,
+                onNavigateToProfile = onNavigateToProfile
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Chef's Specials & Bestsellers",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "Top picks prepared fresh for today's meal",
+                        fontSize = 12.sp,
+                        color = TextSecondary
+                    )
+                }
+
+                TextButton(onClick = onNavigateToMenu) {
+                    Text("See All", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = OrangePrimary)
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = OrangePrimary,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                items(featuredDishes) { dish ->
+                    FeaturedDishCard(
+                        item = dish,
+                        quantity = cartState.getQuantity(dish),
+                        onAdd = { cartState.addItem(dish) },
+                        onRemove = { cartState.removeItem(dish) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Campus Dining Halls",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "Live occupancy across all hostel complexes",
+                        fontSize = 12.sp,
+                        color = TextSecondary
+                    )
+                }
+
+                TextButton(onClick = onNavigateToQueue) {
+                    Text("Heatmap", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = OrangePrimary)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Column(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                MessQData.messLocations.filter { !it.isMain }.forEach { loc ->
+                    OtherMessCard(location = loc, onSelect = onNavigateToQueue)
                 }
             }
 
@@ -358,87 +333,453 @@ fun HomeScreen(
 }
 
 @Composable
-private fun QuickActionCard(
-    label: String,
-    icon: ImageVector,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+private fun LiveCrowdStatusHeroCard(
+    location: MessLocation,
+    currentCount: Int,
+    maxCapacity: Int,
+    waitTimeMin: Int,
+    waitTimeMax: Int,
+    onViewDetails: () -> Unit
 ) {
+    val percentage = (currentCount.toFloat() / maxCapacity.toFloat()).coerceIn(0f, 1f)
+    val animatedPercentage by animateFloatAsState(
+        targetValue = percentage,
+        animationSpec = tween(1200),
+        label = "crowdArc"
+    )
+
+    val crowdColor = when {
+        percentage < 0.45f -> Color(0xFF16A34A)
+        percentage < 0.75f -> Color(0xFFEAB308)
+        else -> Color(0xFFDC2626)
+    }
+
+    val crowdLabel = when {
+        percentage < 0.45f -> "LOW RUSH"
+        percentage < 0.75f -> "MODERATE"
+        else -> "HEAVY RUSH"
+    }
+
     Card(
-        modifier = modifier
-            .aspectRatio(1f)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .clickable(onClick = onViewDetails),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = CardBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(OrangePrimary),
-                contentAlignment = Alignment.Center
+        Column(modifier = Modifier.padding(18.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = label,
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(crowdColor)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = location.name,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = crowdColor.copy(alpha = 0.12f)
+                ) {
+                    Text(
+                        text = crowdLabel,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Black,
+                        color = crowdColor,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = label,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = TextPrimary,
-                textAlign = TextAlign.Center
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Box(
+                    modifier = Modifier.size(110.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Canvas(modifier = Modifier.size(110.dp)) {
+                        drawArc(
+                            color = Color(0xFFE2E8F0),
+                            startAngle = 140f,
+                            sweepAngle = 260f,
+                            useCenter = false,
+                            style = Stroke(width = 10.dp.toPx(), cap = StrokeCap.Round),
+                            size = Size(size.width, size.height)
+                        )
+                        drawArc(
+                            color = crowdColor,
+                            startAngle = 140f,
+                            sweepAngle = 260f * animatedPercentage,
+                            useCenter = false,
+                            style = Stroke(width = 10.dp.toPx(), cap = StrokeCap.Round),
+                            size = Size(size.width, size.height)
+                        )
+                    }
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "${(percentage * 100).toInt()}%",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Black,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "Occupancy",
+                            fontSize = 10.sp,
+                            color = TextSecondary
+                        )
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.weight(1f).padding(start = 18.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.People, contentDescription = null, tint = OrangePrimary, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "$currentCount / $maxCapacity Students",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.Timer, contentDescription = null, tint = OrangePrimary, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "$waitTimeMin - $waitTimeMax Min Average Wait",
+                            fontSize = 12.sp,
+                            color = TextSecondary
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = OrangeLight,
+                        modifier = Modifier.clickable(onClick = onViewDetails)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "View live hourly forecast",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = OrangePrimary
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = OrangePrimary, modifier = Modifier.size(12.dp))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickActionGrid(
+    onNavigateToPreOrder: () -> Unit,
+    onNavigateToMenu: () -> Unit,
+    onNavigateToQueue: () -> Unit,
+    onNavigateToAssistant: () -> Unit,
+    onNavigateToWallet: () -> Unit,
+    onNavigateToProfile: () -> Unit
+) {
+    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            ActionTile(
+                title = "Pre-Order",
+                subtitle = "Skip queue",
+                icon = Icons.Outlined.ShoppingBag,
+                iconColor = OrangePrimary,
+                bgColor = OrangeLight,
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToPreOrder
             )
-            Text(
-                text = when (label) {
-                    "Pre-Order" -> "Skip the queue"
-                    "Book Slot" -> "Reserve your time"
-                    "Menu" -> "Today's meals"
-                    "Order History" -> "Past orders"
-                    "Feedback" -> "Help us improve"
-                    "Assistant" -> "Ask anything"
-                    else -> ""
-                },
-                fontSize = 10.sp,
-                color = TextSecondary,
-                textAlign = TextAlign.Center
+            ActionTile(
+                title = "Today's Menu",
+                subtitle = "4 categories",
+                icon = Icons.Outlined.RestaurantMenu,
+                iconColor = Color(0xFF2563EB),
+                bgColor = Color(0xFFEFF6FF),
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToMenu
+            )
+            ActionTile(
+                title = "Queue Status",
+                subtitle = "Live counters",
+                icon = Icons.Outlined.Groups,
+                iconColor = Color(0xFF059669),
+                bgColor = Color(0xFFECFDF5),
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToQueue
+            )
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            ActionTile(
+                title = "AI Assistant",
+                subtitle = "Groq LLaMA",
+                icon = Icons.Outlined.SupportAgent,
+                iconColor = Color(0xFF7C3AED),
+                bgColor = Color(0xFFF5F3FF),
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToAssistant
+            )
+            ActionTile(
+                title = "Mess Wallet",
+                subtitle = "Card & UPI",
+                icon = Icons.Outlined.AccountBalanceWallet,
+                iconColor = Color(0xFFD97706),
+                bgColor = Color(0xFFFFFBEB),
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToWallet
+            )
+            ActionTile(
+                title = "Digital Pass",
+                subtitle = "Turnstile QR",
+                icon = Icons.Outlined.QrCode,
+                iconColor = Color(0xFF0284C7),
+                bgColor = Color(0xFFF0F9FF),
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToProfile
             )
         }
     }
 }
 
 @Composable
-private fun MiniCrowdBars() {
-    val heights = listOf(0.3f, 0.5f, 0.9f, 0.6f, 0.4f, 0.7f, 0.45f)
-    Row(
-        verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = Arrangement.spacedBy(3.dp),
-        modifier = Modifier.height(40.dp)
+private fun ActionTile(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    iconColor: Color,
+    bgColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick),
+        color = CardBackground,
+        shadowElevation = 2.dp,
+        border = BorderStroke(1.dp, Divider)
     ) {
-        heights.forEachIndexed { index, fraction ->
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
             Box(
                 modifier = Modifier
-                    .width(6.dp)
-                    .fillMaxHeight(fraction)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(
-                        when {
-                            index == 2 -> OrangePrimary
-                            fraction > 0.7f -> HighCrowd.copy(alpha = 0.5f)
-                            else -> OrangePrimary.copy(alpha = 0.3f)
-                        }
-                    )
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(bgColor),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(20.dp))
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = title,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary
             )
+            Text(
+                text = subtitle,
+                fontSize = 10.sp,
+                color = TextSecondary
+            )
+        }
+    }
+}
+
+@Composable
+private fun FeaturedDishCard(
+    item: MenuItem,
+    quantity: Int,
+    onAdd: () -> Unit,
+    onRemove: () -> Unit
+) {
+    Card(
+        modifier = Modifier.width(180.dp),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = CardBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+    ) {
+        Column {
+            Box(modifier = Modifier.height(115.dp).fillMaxWidth()) {
+                FoodThumbnail(
+                    imageUrl = item.imageUrl,
+                    fallbackColor = item.colorHex,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                if (item.tag.isNotEmpty()) {
+                    Surface(
+                        shape = RoundedCornerShape(bottomEnd = 8.dp),
+                        color = OrangePrimary,
+                        modifier = Modifier.align(Alignment.TopStart)
+                    ) {
+                        Text(
+                            text = item.tag,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp)
+                ) {
+                    DietaryBadge(isVeg = item.isVeg)
+                }
+            }
+
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    text = item.name,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                Text(
+                    text = "${item.calories} kcal • ${item.prepTimeMinutes} min",
+                    fontSize = 10.sp,
+                    color = TextSecondary
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Rs. ${item.price}",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Black,
+                        color = OrangePrimary
+                    )
+
+                    QuantityStepper(
+                        quantity = quantity,
+                        onAdd = onAdd,
+                        onRemove = onRemove
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OtherMessCard(
+    location: MessLocation,
+    onSelect: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(onClick = onSelect),
+        color = CardBackground,
+        shadowElevation = 1.dp,
+        border = BorderStroke(1.dp, Divider)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when (location.crowdLevel) {
+                                CrowdLevel.LOW -> Color(0xFF16A34A)
+                                CrowdLevel.MODERATE -> Color(0xFFEAB308)
+                                CrowdLevel.HIGH -> Color(0xFFDC2626)
+                            }
+                        )
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Text(
+                        text = location.name,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "${location.block} • ${location.currentOccupancy}/${location.maxCapacity} Seats",
+                        fontSize = 11.sp,
+                        color = TextSecondary
+                    )
+                }
+            }
+
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = OrangeLight
+            ) {
+                Text(
+                    text = "${location.waitTimeMin}m wait",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = OrangePrimary,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
         }
     }
 }

@@ -1,7 +1,11 @@
 package com.messq.app.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,10 +13,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.MoreHoriz
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ShoppingBag
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,64 +30,106 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.messq.app.navigation.Screen
-import com.messq.app.ui.theme.*
+import com.messq.app.ui.theme.CardBackground
+import com.messq.app.ui.theme.OrangePrimary
+import com.messq.app.ui.theme.TextPrimary
+import com.messq.app.ui.theme.TextSecondary
 
-data class NavItem(val label: String, val icon: ImageVector, val route: String)
+data class NavItem(
+    val label: String,
+    val icon: ImageVector,
+    val route: String,
+    val badgeCount: Int = 0
+)
 
 @Composable
 fun MessQBottomNav(
     currentRoute: String,
+    cartItemCount: Int = 0,
     onNavigate: (String) -> Unit
 ) {
     val items = listOf(
         NavItem("Home", Icons.Outlined.Home, Screen.Home.route),
-        NavItem("Orders", Icons.Outlined.ShoppingBag, Screen.OrderHistory.route),
         NavItem("Menu", Icons.AutoMirrored.Outlined.MenuBook, Screen.Menu.route),
-        NavItem("Wallet", Icons.Outlined.AccountBalanceWallet, "wallet"),
-        NavItem("More", Icons.Outlined.MoreHoriz, "more")
+        NavItem("Pre-Order", Icons.Outlined.ShoppingBag, Screen.PreOrder.route, badgeCount = cartItemCount),
+        NavItem("Wallet", Icons.Outlined.AccountBalanceWallet, Screen.Wallet.route),
+        NavItem("Profile", Icons.Outlined.Person, Screen.Profile.route)
     )
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shadowElevation = 16.dp,
+        shadowElevation = 18.dp,
         color = CardBackground
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp),
+                .navigationBarsPadding()
+                .padding(horizontal = 8.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
             items.forEach { item ->
                 val isSelected = currentRoute == item.route
+                val iconTint by animateColorAsState(
+                    targetValue = if (isSelected) OrangePrimary else TextSecondary,
+                    animationSpec = spring(),
+                    label = "iconTint"
+                )
+
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .clickable { onNavigate(item.route) }
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { onNavigate(item.route) }
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(if (isSelected) 40.dp else 36.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                if (isSelected) OrangePrimary.copy(alpha = 0.15f) else Color.Transparent
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = item.icon,
-                            contentDescription = item.label,
-                            tint = if (isSelected) OrangePrimary else TextSecondary,
-                            modifier = Modifier.size(22.dp)
-                        )
+                    Box(contentAlignment = Alignment.TopEnd) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (isSelected) OrangePrimary.copy(alpha = 0.12f) else Color.Transparent
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = item.icon,
+                                contentDescription = item.label,
+                                tint = iconTint,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        if (item.badgeCount > 0) {
+                            Box(
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .offset(x = 4.dp, y = (-2).dp)
+                                    .clip(CircleShape)
+                                    .background(OrangePrimary),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (item.badgeCount > 9) "9+" else item.badgeCount.toString(),
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+                        }
                     }
+
                     Spacer(modifier = Modifier.height(2.dp))
+
                     Text(
                         text = item.label,
                         fontSize = 11.sp,
-                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                         color = if (isSelected) OrangePrimary else TextSecondary
                     )
                 }

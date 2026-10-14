@@ -9,6 +9,11 @@ data class MenuItem(
     val quantity: String,
     val category: MealCategory,
     val colorHex: Long,
+    val imageUrl: String = "",
+    val calories: Int = 300,
+    val proteinGrams: Int = 10,
+    val prepTimeMinutes: Int = 5,
+    val tag: String = "",
     val isAvailable: Boolean = true
 )
 
@@ -24,6 +29,8 @@ data class MessLocation(
     val name: String,
     val block: String,
     val crowdLevel: CrowdLevel,
+    val currentOccupancy: Int,
+    val maxCapacity: Int,
     val waitTimeMin: Int,
     val waitTimeMax: Int,
     val isMain: Boolean = false
@@ -42,95 +49,216 @@ enum class SlotStatus { AVAILABLE, FILLING_FAST, FULL }
 
 data class ChatMessage(
     val text: String,
-    val isUser: Boolean
+    val isUser: Boolean,
+    val timestamp: String = "Just now"
+)
+
+data class WalletTransaction(
+    val id: String,
+    val title: String,
+    val amount: Int,
+    val isCredit: Boolean,
+    val date: String,
+    val time: String,
+    val status: String = "Successful"
+)
+
+data class StudentProfile(
+    val name: String,
+    val rollNo: String,
+    val hostelBlock: String,
+    val roomNo: String,
+    val mealPlan: String,
+    val isPureVeg: Boolean,
+    val qrToken: String
 )
 
 object MessQData {
 
+    val studentProfile = StudentProfile(
+        name = "Himanshu Raj",
+        rollNo = "12104892",
+        hostelBlock = "Block A (Boys Hostel)",
+        roomNo = "Room 304",
+        mealPlan = "Premium 3-Meal Plan",
+        isPureVeg = false,
+        qrToken = "MQ-PASS-12104892-2026"
+    )
+
+    val sampleTransactions = listOf(
+        WalletTransaction("TXN-9021", "Breakfast Pre-Order (#MQ-8192)", 50, false, "Today", "08:15 AM"),
+        WalletTransaction("TXN-8842", "Wallet Auto-Topup via UPI", 1000, true, "Yesterday", "06:40 PM"),
+        WalletTransaction("TXN-7612", "Dinner - Paneer Thali (#MQ-7721)", 95, false, "14 Oct", "08:30 PM"),
+        WalletTransaction("TXN-6510", "Snacks - Cold Coffee & Samosa", 45, false, "13 Oct", "05:10 PM"),
+        WalletTransaction("TXN-5421", "Mess Security Deposit Refund", 500, true, "10 Oct", "11:20 AM")
+    )
+
     val breakfastItems = listOf(
-        MenuItem(1, "Aloo Paratha", "Stuffed flatbread with spiced potato", 30, true, "2 pcs", MealCategory.BREAKFAST, 0xFFE8D5A3),
-        MenuItem(2, "Idli Sambar", "Steamed rice cakes with lentil soup", 25, true, "3 pcs", MealCategory.BREAKFAST, 0xFFF5F0E8),
-        MenuItem(3, "Poha", "Flattened rice with vegetables", 20, true, "1 plate", MealCategory.BREAKFAST, 0xFFFFF3CD),
-        MenuItem(4, "Bread Butter", "Toasted bread with butter and jam", 15, true, "2 pcs", MealCategory.BREAKFAST, 0xFFFFE4B5),
-        MenuItem(5, "Masala Dosa", "Crispy crepe with spiced potato filling", 35, true, "1 pc", MealCategory.BREAKFAST, 0xFFD4A76A),
-        MenuItem(6, "Upma", "Semolina porridge with vegetables", 20, true, "1 bowl", MealCategory.BREAKFAST, 0xFFF0E68C),
-        MenuItem(7, "Filter Coffee", "South Indian style coffee", 15, true, "1 cup", MealCategory.BREAKFAST, 0xFF8B6914),
-        MenuItem(8, "Boiled Eggs", "Protein-rich boiled eggs", 20, false, "2 pcs", MealCategory.BREAKFAST, 0xFFFFF8DC)
+        MenuItem(
+            1, "Aloo Paratha with Curd", "Two golden crisp stuffed flatbreads with fresh curd and mint pickle",
+            30, true, "2 pcs", MealCategory.BREAKFAST, 0xFFE8D5A3,
+            "https://images.unsplash.com/photo-1626074353765-517a681e40be?w=600&auto=format&fit=crop&q=80",
+            320, 8, 5, "Bestseller"
+        ),
+        MenuItem(
+            2, "Idli Sambar with Chutney", "Steamed fermented rice cakes with hot aromatic lentil sambar and coconut chutney",
+            25, true, "3 pcs", MealCategory.BREAKFAST, 0xFFF5F0E8,
+            "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80",
+            195, 6, 3, "Healthy Pick"
+        ),
+        MenuItem(
+            3, "Indori Poha", "Light flattened rice tossed with turmeric, mustard seeds, crunchy peanuts and sev",
+            20, true, "1 plate", MealCategory.BREAKFAST, 0xFFFFF3CD,
+            "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=600&auto=format&fit=crop&q=80",
+            210, 5, 2, "Quick Bite"
+        ),
+        MenuItem(
+            4, "Crispy Masala Dosa", "Thin rice crepe stuffed with mashed spiced potatoes served with sambar",
+            35, true, "1 pc", MealCategory.BREAKFAST, 0xFFD4A76A,
+            "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=600&auto=format&fit=crop&q=80",
+            280, 7, 7, "Chef Special"
+        ),
+        MenuItem(
+            5, "Boiled Eggs (Double)", "Farm fresh organic boiled eggs sprinkled with black pepper and rock salt",
+            20, false, "2 pcs", MealCategory.BREAKFAST, 0xFFFFF8DC,
+            "https://images.unsplash.com/photo-1582169296194-e4d644c48063?w=600&auto=format&fit=crop&q=80",
+            155, 13, 2, "High Protein"
+        ),
+        MenuItem(
+            6, "South Indian Filter Coffee", "Authentic strong chicory blend brewed coffee with frothed milk",
+            15, true, "1 cup", MealCategory.BREAKFAST, 0xFF8B6914,
+            "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=600&auto=format&fit=crop&q=80",
+            90, 3, 2, "Must Try"
+        )
     )
 
     val lunchItems = listOf(
-        MenuItem(9, "Dal Tadka", "Yellow lentils tempered with spices", 40, true, "1 bowl", MealCategory.LUNCH, 0xFFFFCC80),
-        MenuItem(10, "Paneer Butter Masala", "Cottage cheese in rich tomato gravy", 60, true, "1 bowl", MealCategory.LUNCH, 0xFFFF8A65),
-        MenuItem(11, "Chicken Curry", "Spicy chicken in onion-tomato gravy", 80, false, "1 bowl", MealCategory.LUNCH, 0xFFA0522D),
-        MenuItem(12, "Steamed Rice", "Plain basmati rice", 20, true, "1 plate", MealCategory.LUNCH, 0xFFF5F5DC),
-        MenuItem(13, "Chapati", "Whole wheat flatbread", 10, true, "2 pcs", MealCategory.LUNCH, 0xFFDEB887),
-        MenuItem(14, "Rajma Chawal", "Kidney beans curry with rice", 50, true, "1 plate", MealCategory.LUNCH, 0xFF8B0000),
-        MenuItem(15, "Mixed Veg", "Seasonal vegetables stir-fried", 35, true, "1 bowl", MealCategory.LUNCH, 0xFF6B8E23),
-        MenuItem(16, "Curd", "Fresh yogurt", 15, true, "1 cup", MealCategory.LUNCH, 0xFFFFFAFA)
+        MenuItem(
+            7, "Paneer Butter Masala Thali", "Rich cottage cheese in creamy tomato gravy, dal tadka, 3 rotis, rice, salad",
+            75, true, "1 thali", MealCategory.LUNCH, 0xFFFF8A65,
+            "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=600&auto=format&fit=crop&q=80",
+            580, 22, 8, "Bestseller"
+        ),
+        MenuItem(
+            8, "Special Chicken Curry Meal", "Homestyle chicken simmered in onion-tomato gravy with jeera rice and 2 chapatis",
+            90, false, "1 meal", MealCategory.LUNCH, 0xFFA0522D,
+            "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=600&auto=format&fit=crop&q=80",
+            640, 34, 10, "Chef Special"
+        ),
+        MenuItem(
+            9, "Punjabi Rajma Chawal", "Slow-cooked red kidney beans in thick spiced curry over fragrant basmati rice",
+            50, true, "1 bowl", MealCategory.LUNCH, 0xFF8B0000,
+            "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=600&auto=format&fit=crop&q=80",
+            420, 16, 4, "Campus Favorite"
+        ),
+        MenuItem(
+            10, "Dal Tadka & Steamed Rice", "Yellow lentils tempered with ghee, cumin and garlic served with hot rice",
+            40, true, "1 plate", MealCategory.LUNCH, 0xFFFFCC80,
+            "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&auto=format&fit=crop&q=80",
+            360, 12, 3, "Classic"
+        ),
+        MenuItem(
+            11, "Tawa Roti (3 Pieces)", "Freshly roasted whole wheat chapatis brushed with pure butter",
+            15, true, "3 pcs", MealCategory.LUNCH, 0xFFDEB887,
+            "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&auto=format&fit=crop&q=80",
+            180, 6, 2, "Add-on"
+        )
     )
 
     val dinnerItems = listOf(
-        MenuItem(17, "Roti", "Soft whole wheat flatbread", 8, true, "2 pcs", MealCategory.DINNER, 0xFFDEB887),
-        MenuItem(18, "Chole Bhature", "Spiced chickpeas with fried bread", 55, true, "1 plate", MealCategory.DINNER, 0xFFCD853F),
-        MenuItem(19, "Egg Bhurji", "Scrambled eggs with spices", 45, false, "1 plate", MealCategory.DINNER, 0xFFFFD700),
-        MenuItem(20, "Palak Paneer", "Spinach and cottage cheese curry", 65, true, "1 bowl", MealCategory.DINNER, 0xFF3CB371),
-        MenuItem(21, "Dal Makhani", "Slow cooked black lentils", 55, true, "1 bowl", MealCategory.DINNER, 0xFF8B4513),
-        MenuItem(22, "Jeera Rice", "Basmati rice with cumin", 30, true, "1 plate", MealCategory.DINNER, 0xFFF5F5DC),
-        MenuItem(23, "Khichdi", "Lentil and rice porridge", 35, true, "1 bowl", MealCategory.DINNER, 0xFFDAA520),
-        MenuItem(24, "Gulab Jamun", "Milk solid dumplings in sugar syrup", 25, true, "2 pcs", MealCategory.DINNER, 0xFF8B4513)
+        MenuItem(
+            12, "Delhi Chole Bhature", "Spiced chickpea curry paired with two fluffy, ballooned deep-fried bhaturas",
+            55, true, "1 plate", MealCategory.DINNER, 0xFFCD853F,
+            "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=600&auto=format&fit=crop&q=80",
+            520, 15, 6, "Popular"
+        ),
+        MenuItem(
+            13, "Dal Makhani with Jeera Rice", "Black lentils and kidney beans simmered overnight with cream and butter",
+            60, true, "1 bowl", MealCategory.DINNER, 0xFF8B4513,
+            "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=600&auto=format&fit=crop&q=80",
+            480, 18, 5, "Chef Special"
+        ),
+        MenuItem(
+            14, "Egg Bhurji Pav Combo", "Spicy scrambled eggs with chopped onions and tomatoes with 2 butter toasted pavs",
+            45, false, "1 plate", MealCategory.DINNER, 0xFFFFD700,
+            "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=600&auto=format&fit=crop&q=80",
+            390, 20, 5, "High Protein"
+        ),
+        MenuItem(
+            15, "Palak Paneer with Rotis", "Smooth spinach gravy with tender cottage cheese cubes and 3 hot rotis",
+            65, true, "1 meal", MealCategory.DINNER, 0xFF3CB371,
+            "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80",
+            450, 21, 7, "Nutritious"
+        ),
+        MenuItem(
+            16, "Gulab Jamun (Warm)", "Two melt-in-the-mouth soft milk dumplings dipped in cardamom sugar syrup",
+            25, true, "2 pcs", MealCategory.DINNER, 0xFF8B4513,
+            "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80",
+            260, 4, 1, "Dessert"
+        )
     )
 
     val snackItems = listOf(
-        MenuItem(25, "Samosa", "Crispy pastry with spiced potato filling", 15, true, "2 pcs", MealCategory.SNACKS, 0xFFD2691E),
-        MenuItem(26, "Vada Pav", "Mumbai street burger", 20, true, "1 pc", MealCategory.SNACKS, 0xFFCD853F),
-        MenuItem(27, "Masala Chai", "Spiced Indian tea", 10, true, "1 cup", MealCategory.SNACKS, 0xFFB8860B),
-        MenuItem(28, "Cold Coffee", "Chilled blended coffee", 30, true, "1 glass", MealCategory.SNACKS, 0xFF6F4E37),
-        MenuItem(29, "Maggi Noodles", "Instant noodles", 25, true, "1 plate", MealCategory.SNACKS, 0xFFFFD700),
-        MenuItem(30, "Aloo Tikki", "Potato patties with chutneys", 20, true, "2 pcs", MealCategory.SNACKS, 0xFFDEB887),
-        MenuItem(31, "Bread Omelette", "Egg omelette sandwiched in bread", 35, false, "1 pc", MealCategory.SNACKS, 0xFFFFCC02),
-        MenuItem(32, "Fruit Juice", "Fresh seasonal juice", 25, true, "1 glass", MealCategory.SNACKS, 0xFFFF8C00)
+        MenuItem(
+            17, "Samosa Chaat Platter", "Crushed samosas topped with spicy chole, sweetened yogurt and tangy chutneys",
+            25, true, "1 plate", MealCategory.SNACKS, 0xFFD2691E,
+            "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80",
+            310, 7, 3, "Evening Hit"
+        ),
+        MenuItem(
+            18, "Mumbai Vada Pav Duo", "Two spicy potato fritters in soft buns laced with garlic chutney and fried chilies",
+            25, true, "2 pcs", MealCategory.SNACKS, 0xFFCD853F,
+            "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80",
+            340, 8, 3, "Bestseller"
+        ),
+        MenuItem(
+            19, "Iced Cold Coffee with Scoop", "Creamy chilled coffee with rich cocoa dusting and vanilla ice cream topping",
+            35, true, "1 glass", MealCategory.SNACKS, 0xFF6F4E37,
+            "https://images.unsplash.com/photo-1517256064527-09c73fc73e38?w=600&auto=format&fit=crop&q=80",
+            220, 6, 2, "Refreshing"
+        ),
+        MenuItem(
+            20, "Cheese Masala Maggi", "Classic Maggi noodles cooked with mixed vegetables, secret spices and melted cheese",
+            30, true, "1 bowl", MealCategory.SNACKS, 0xFFFFD700,
+            "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=600&auto=format&fit=crop&q=80",
+            310, 8, 4, "Late Night"
+        ),
+        MenuItem(
+            21, "Fresh Watermelon Juice", "Hydrating pure cold-pressed watermelon juice with mint and black salt",
+            25, true, "1 glass", MealCategory.SNACKS, 0xFFFF8C00,
+            "https://images.unsplash.com/photo-1589733955941-5eeaf752f6dd?w=600&auto=format&fit=crop&q=80",
+            110, 2, 2, "Detox"
+        )
     )
 
+    val allMenuItems: List<MenuItem> = breakfastItems + lunchItems + dinnerItems + snackItems
+
     val messLocations = listOf(
-        MessLocation(1, "Main Mess", "Block A", CrowdLevel.MODERATE, 12, 18, isMain = true),
-        MessLocation(2, "D-Block Mess", "Block D", CrowdLevel.LOW, 5, 8),
-        MessLocation(3, "E-Block Mess", "Block E", CrowdLevel.MODERATE, 15, 20),
-        MessLocation(4, "H-Block Mess", "Block H", CrowdLevel.HIGH, 25, 35)
+        MessLocation(1, "Central Mess (Block A)", "Block A Ground Floor", CrowdLevel.MODERATE, 134, 200, 8, 12, isMain = true),
+        MessLocation(2, "North Wing Cafeteria", "Block D Annex", CrowdLevel.LOW, 42, 180, 2, 5),
+        MessLocation(3, "Engineering Block Food Court", "Block E 1st Floor", CrowdLevel.HIGH, 188, 220, 18, 25),
+        MessLocation(4, "Girls Hostel Dining Hall", "Block H Dining Complex", CrowdLevel.LOW, 55, 160, 3, 6)
     )
 
     val timeSlots = listOf(
-        TimeSlot(1, "08:00 – 08:30 AM", SlotStatus.AVAILABLE, 8),
-        TimeSlot(2, "08:30 – 09:00 AM", SlotStatus.AVAILABLE, 12),
-        TimeSlot(3, "09:00 – 09:30 AM", SlotStatus.FILLING_FAST, 3),
-        TimeSlot(4, "09:30 – 10:00 AM", SlotStatus.FILLING_FAST, 2),
-        TimeSlot(5, "10:00 – 10:30 AM", SlotStatus.AVAILABLE, 15),
-        TimeSlot(6, "10:30 – 11:00 AM", SlotStatus.AVAILABLE, 20)
+        TimeSlot(1, "08:00 - 08:30 AM", SlotStatus.AVAILABLE, 24),
+        TimeSlot(2, "08:30 - 09:00 AM", SlotStatus.FILLING_FAST, 6),
+        TimeSlot(3, "09:00 - 09:30 AM", SlotStatus.FULL, 0),
+        TimeSlot(4, "12:30 - 01:00 PM", SlotStatus.AVAILABLE, 30),
+        TimeSlot(5, "01:00 - 01:30 PM", SlotStatus.FILLING_FAST, 4),
+        TimeSlot(6, "01:30 - 02:00 PM", SlotStatus.AVAILABLE, 18),
+        TimeSlot(7, "07:30 - 08:00 PM", SlotStatus.AVAILABLE, 22),
+        TimeSlot(8, "08:00 - 08:30 PM", SlotStatus.FILLING_FAST, 5)
     )
 
-    val hourlyData = listOf(
-        Pair("8am", 0.2f),
-        Pair("10am", 0.5f),
-        Pair("12pm", 0.95f),
-        Pair("2pm", 0.6f),
-        Pair("4pm", 0.3f),
-        Pair("6pm", 0.75f),
-        Pair("8pm", 0.4f)
-    )
-
-    val pickupDates = listOf(
-        Triple("Mon", "16 Jun", true),
-        Triple("Tue", "17 Jun", false),
-        Triple("Wed", "18 Jun", false),
-        Triple("Thu", "19 Jun", false),
-        Triple("Fri", "20 Jun", false)
-    )
-
-    val assistantReplies = mapOf(
-        "breakfast" to "Today's breakfast menu includes Aloo Paratha (Rs.30), Idli Sambar (Rs.25), Poha (Rs.20), Masala Dosa (Rs.35), and Filter Coffee (Rs.15). All items are pure vegetarian.",
-        "crowd" to "Current crowd at Main Mess Block A is MODERATE with an estimated wait of 12 to 18 minutes. D-Block Mess has LOW crowd with only 5 to 8 min wait — a better option right now.",
-        "slot" to "Available slots today:\n08:00 to 08:30 AM — 8 seats left\n08:30 to 09:00 AM — 12 seats left\n10:00 to 10:30 AM — 15 seats left\nShall I proceed to booking?",
-        "veg" to "Vegetarian options today:\nBreakfast: Aloo Paratha, Idli Sambar, Poha, Masala Dosa\nLunch: Dal Tadka, Paneer Butter Masala, Rajma Chawal\nDinner: Chole Bhature, Palak Paneer, Dal Makhani",
-        "nutrition" to "Paneer Butter Masala (per serving):\nCalories: 320 kcal\nProtein: 18g\nCarbohydrates: 12g\nFat: 22g\nCalcium content is high — good for bone health.",
-        "default" to "Hello! I am MessQ Assistant. I can help you with:\n- Today's menu and prices\n- Live crowd status\n- Booking pickup slots\n- Nutrition information\n- Pre-ordering meals\nWhat would you like to know?"
+    val hourlyCrowd = listOf(
+        Pair("8 AM", 0.35f),
+        Pair("10 AM", 0.60f),
+        Pair("12 PM", 0.92f),
+        Pair("2 PM", 0.45f),
+        Pair("4 PM", 0.25f),
+        Pair("6 PM", 0.50f),
+        Pair("8 PM", 0.88f),
+        Pair("10 PM", 0.30f)
     )
 }

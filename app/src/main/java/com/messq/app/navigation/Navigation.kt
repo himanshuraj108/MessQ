@@ -1,11 +1,9 @@
 package com.messq.app.navigation
 
-import androidx.compose.runtime.*
+import androidx.compose.runtime.mutableStateListOf
 import com.messq.app.data.CartItem
 import com.messq.app.data.MenuItem
-import com.messq.app.data.MessQData
 
-// Simple state holder for cart
 class CartState {
     private val _items = mutableStateListOf<CartItem>()
     val items: List<CartItem> get() = _items
@@ -51,6 +49,7 @@ sealed class Screen(val route: String) {
     object OrderConfirmed : Screen("order_confirmed")
     object AIAssistant : Screen("ai_assistant")
     object OrderHistory : Screen("order_history")
+    object Wallet : Screen("wallet")
     object Profile : Screen("profile")
     object ForgotPassword : Screen("forgot_password")
 }
