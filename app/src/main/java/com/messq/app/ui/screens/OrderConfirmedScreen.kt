@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.messq.app.data.CartItem
+import com.messq.app.ui.components.*
 import com.messq.app.ui.theme.*
 
 @Composable
@@ -36,8 +37,8 @@ fun OrderConfirmedScreen(
 ) {
     var animationTrigger by remember { mutableStateOf(false) }
     val checkmarkScale by animateFloatAsState(
-        targetValue = if (animationTrigger) 1f else 0.2f,
-        animationSpec = spring(dampingRatio = 0.5f, stiffness = 300f),
+        targetValue = if (animationTrigger) 1f else 0.15f,
+        animationSpec = spring(dampingRatio = 0.45f, stiffness = 280f),
         label = "checkScale"
     )
 
@@ -65,181 +66,210 @@ fun OrderConfirmedScreen(
                         .padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Button(
-                        onClick = onViewOrders,
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
+                            .height(52.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(OrangePrimary)
+                            .bouncyClick(onClick = onViewOrders),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.AutoMirrored.Outlined.ReceiptLong, contentDescription = null, tint = Color.White)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "View Digital Token & Receipt",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.AutoMirrored.Outlined.ReceiptLong, contentDescription = null, tint = Color.White)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "View Digital Token & Receipt",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
                     }
 
-                    OutlinedButton(
-                        onClick = onBackToHome,
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        border = BorderStroke(1.5.dp, OrangePrimary)
+                            .height(50.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(CardBackground)
+                            .bouncyClick(onClick = onBackToHome),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "Back to Campus Home",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = OrangePrimary
-                        )
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.5.dp, OrangePrimary),
+                            color = Color.Transparent,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = "Back to Campus Home",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = OrangePrimary
+                                )
+                            }
+                        }
                     }
                 }
             }
         },
         containerColor = WarmWhite
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Box(
+            ConfettiCanvas(
                 modifier = Modifier
-                    .size(100.dp)
-                    .clip(CircleShape)
-                    .background(SuccessGreen.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
+                    .fillMaxSize()
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Spacer(modifier = Modifier.height(16.dp))
+
                 Box(
-                    modifier = Modifier
-                        .size(76.dp)
-                        .scale(checkmarkScale)
-                        .clip(CircleShape)
-                        .background(SuccessGreen),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(130.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Check,
-                        contentDescription = "Success",
-                        tint = Color.White,
-                        modifier = Modifier.size(44.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            Text(
-                text = "Order Placed Successfully",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Black,
-                color = TextPrimary
-            )
-
-            Text(
-                text = "Your meal token has been generated and sent to the kitchen",
-                fontSize = 13.sp,
-                color = TextSecondary
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(containerColor = CardBackground),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(22.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "DIGITAL MEAL TOKEN",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 2.sp,
-                        color = TextSecondary
+                    ConcentricShockwave(
+                        color = SuccessGreen,
+                        modifier = Modifier.size(130.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Text(
-                        text = "#$randomTokenId",
-                        fontSize = 36.sp,
-                        fontWeight = FontWeight.Black,
-                        fontFamily = FontFamily.Monospace,
-                        color = OrangePrimary
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Surface(
+                    Box(
                         modifier = Modifier
-                            .size(140.dp)
-                            .clip(RoundedCornerShape(12.dp)),
-                        color = Color.White,
-                        border = BorderStroke(1.5.dp, Divider)
+                            .size(86.dp)
+                            .scale(checkmarkScale)
+                            .clip(CircleShape)
+                            .background(SuccessGreen),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Outlined.QrCode2,
-                                contentDescription = null,
-                                tint = TextPrimary,
-                                modifier = Modifier.size(120.dp)
-                            )
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = "Success",
+                            tint = Color.White,
+                            modifier = Modifier.size(46.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Text(
+                    text = "Order Placed Successfully",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Black,
+                    color = TextPrimary
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "Your meal token has been generated and sent to the kitchen",
+                    fontSize = 13.sp,
+                    color = TextSecondary
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .holographicSweep(),
+                    shape = RoundedCornerShape(22.dp),
+                    colors = CardDefaults.cardColors(containerColor = CardBackground),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(22.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "DIGITAL MEAL TOKEN",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 2.sp,
+                            color = TextSecondary
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = "#$randomTokenId",
+                            fontSize = 36.sp,
+                            fontWeight = FontWeight.Black,
+                            fontFamily = FontFamily.Monospace,
+                            color = OrangePrimary
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Surface(
+                            modifier = Modifier
+                                .size(140.dp)
+                                .clip(RoundedCornerShape(14.dp)),
+                            color = Color.White,
+                            border = BorderStroke(1.5.dp, Divider)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Outlined.QrCode2,
+                                    contentDescription = null,
+                                    tint = TextPrimary,
+                                    modifier = Modifier.size(120.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Show this QR code at Counter 2 to pick up meal",
+                            fontSize = 11.sp,
+                            color = TextHint
+                        )
+
+                        Spacer(modifier = Modifier.height(18.dp))
+                        HorizontalDivider(color = Divider)
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        OrderTimelineTracker()
+
+                        Spacer(modifier = Modifier.height(14.dp))
+                        HorizontalDivider(color = Divider)
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Amount Paid via Wallet", fontSize = 13.sp, color = TextSecondary)
+                            Text("Rs. $totalAmount", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Dining Hall", fontSize = 13.sp, color = TextSecondary)
+                            Text("Central Mess (Block A)", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "Show this QR code at Counter 2 to pick up meal",
-                        fontSize = 11.sp,
-                        color = TextHint
-                    )
-
-                    Spacer(modifier = Modifier.height(18.dp))
-                    HorizontalDivider(color = Divider)
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    OrderTimelineTracker()
-
-                    Spacer(modifier = Modifier.height(14.dp))
-                    HorizontalDivider(color = Divider)
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Amount Paid via Wallet", fontSize = 13.sp, color = TextSecondary)
-                        Text("Rs. $totalAmount", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                    }
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Dining Hall", fontSize = 13.sp, color = TextSecondary)
-                        Text("Central Mess (Block A)", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
-                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(20.dp))
+            }
         }
     }
 }
@@ -297,6 +327,8 @@ private fun TimelineItem(
             ) {
                 if (isCompleted) {
                     Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
+                } else if (isCurrent) {
+                    PulsingRadarDot(color = Color.White, dotSize = 6.dp, ringSize = 16.dp)
                 }
             }
 

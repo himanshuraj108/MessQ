@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.messq.app.ui.components.MessQBrandLogo
+import com.messq.app.ui.components.*
 import com.messq.app.ui.theme.*
 import com.messq.app.viewmodel.AuthState
 import com.messq.app.viewmodel.AuthViewModel
@@ -137,7 +137,7 @@ fun LoginScreen(
                                         .weight(1f)
                                         .clip(RoundedCornerShape(10.dp))
                                         .background(if (isSelected) OrangePrimary else Color.Transparent)
-                                        .clickable { selectedRoleIndex = index }
+                                        .bouncyClick { selectedRoleIndex = index }
                                         .padding(vertical = 10.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
@@ -359,7 +359,7 @@ fun LoginScreen(
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = OrangePrimary,
-                                modifier = Modifier.clickable {
+                                modifier = Modifier.bouncyClick {
                                     isRegisterMode = !isRegisterMode
                                     localError = ""
                                 }

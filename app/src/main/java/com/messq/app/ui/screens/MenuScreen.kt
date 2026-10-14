@@ -1,8 +1,7 @@
 package com.messq.app.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,10 +32,7 @@ import com.messq.app.data.MealCategory
 import com.messq.app.data.MenuItem
 import com.messq.app.data.MessQData
 import com.messq.app.navigation.CartState
-import com.messq.app.ui.components.DietaryBadge
-import com.messq.app.ui.components.FoodThumbnail
-import com.messq.app.ui.components.MessQBottomNav
-import com.messq.app.ui.components.QuantityStepper
+import com.messq.app.ui.components.*
 import com.messq.app.ui.theme.*
 import com.messq.app.viewmodel.MenuViewModel
 
@@ -202,15 +198,19 @@ fun MenuScreen(
             Column {
                 AnimatedVisibility(
                     visible = cartState.totalItems > 0,
-                    enter = slideInVertically(initialOffsetY = { it }),
-                    exit = slideOutVertically(targetOffsetY = { it })
+                    enter = (slideInVertically(
+                        initialOffsetY = { it },
+                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow)
+                    ) + fadeIn()),
+                    exit = (slideOutVertically(targetOffsetY = { it }) + fadeOut())
                 ) {
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .clickable(onClick = onNavigateToPreOrder),
+                            .clip(RoundedCornerShape(18.dp))
+                            .breathingGlow(OrangePrimary)
+                            .bouncyClick(onClick = onNavigateToPreOrder),
                         color = OrangePrimary,
                         shadowElevation = 8.dp
                     ) {
@@ -222,19 +222,28 @@ fun MenuScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .clip(CircleShape)
-                                        .background(Color.White),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "${cartState.totalItems}",
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = OrangePrimary
-                                    )
+                                AnimatedContent(
+                                    targetState = cartState.totalItems,
+                                    transitionSpec = {
+                                        (scaleIn(spring(dampingRatio = Spring.DampingRatioMediumBouncy)) + fadeIn()) togetherWith
+                                                (scaleOut() + fadeOut())
+                                    },
+                                    label = "cartBadgeAnim"
+                                ) { count ->
+                                    Box(
+                                        modifier = Modifier
+                                            .size(34.dp)
+                                            .clip(CircleShape)
+                                            .background(Color.White),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "$count",
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = OrangePrimary
+                                        )
+                                    }
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
@@ -340,7 +349,7 @@ private fun CategoryPill(
         color = if (isSelected) OrangePrimary else CardBackground,
         border = if (isSelected) null else BorderStroke(1.dp, Divider),
         shadowElevation = if (isSelected) 2.dp else 0.dp,
-        modifier = Modifier.clickable(onClick = onClick)
+        modifier = Modifier.bouncyClick(onClick = onClick)
     ) {
         Text(
             text = title,
@@ -381,19 +390,12 @@ private fun MenuDishItemCard(
                 )
 
                 if (item.tag.isNotEmpty()) {
-                    Surface(
-                        shape = RoundedCornerShape(bottomEnd = 6.dp),
-                        color = OrangePrimary,
-                        modifier = Modifier.align(Alignment.TopStart)
-                    ) {
-                        Text(
-                            text = item.tag,
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
+                    ShimmeringSpecialTag(
+                        text = item.tag,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(4.dp)
+                    )
                 }
             }
 

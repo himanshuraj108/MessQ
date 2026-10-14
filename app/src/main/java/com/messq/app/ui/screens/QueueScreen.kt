@@ -16,9 +16,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.outlined.DirectionsWalk
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.DirectionsWalk
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.QueryBuilder
 import androidx.compose.material.icons.outlined.Schedule
@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import com.messq.app.data.CrowdLevel
 import com.messq.app.data.MessLocation
 import com.messq.app.data.MessQData
+import com.messq.app.ui.components.*
 import com.messq.app.ui.theme.*
 
 @Composable
@@ -103,13 +104,19 @@ fun QueueScreen(onBack: () -> Unit) {
                         shape = RoundedCornerShape(8.dp),
                         color = crowdColor.copy(alpha = 0.12f)
                     ) {
-                        Text(
-                            text = crowdStatusText,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Black,
-                            color = crowdColor,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            PulsingRadarDot(color = crowdColor, dotSize = 6.dp, ringSize = 14.dp)
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text(
+                                text = crowdStatusText,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Black,
+                                color = crowdColor
+                            )
+                        }
                     }
                 }
             }
@@ -135,7 +142,7 @@ fun QueueScreen(onBack: () -> Unit) {
                         color = if (isSelected) OrangePrimary else CardBackground,
                         border = if (isSelected) null else BorderStroke(1.dp, Divider),
                         shadowElevation = if (isSelected) 3.dp else 0.dp,
-                        modifier = Modifier.clickable { selectedLocation = loc }
+                        modifier = Modifier.bouncyClick { selectedLocation = loc }
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
@@ -171,7 +178,8 @@ fun QueueScreen(onBack: () -> Unit) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
+                    .padding(horizontal = 20.dp)
+                    .holographicSweep(),
                 shape = RoundedCornerShape(22.dp),
                 colors = CardDefaults.cardColors(containerColor = CardBackground),
                 elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
@@ -284,7 +292,7 @@ fun QueueScreen(onBack: () -> Unit) {
                             .background(Color(0xFF16A34A).copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Outlined.DirectionsWalk, contentDescription = null, tint = Color(0xFF16A34A))
+                        Icon(Icons.AutoMirrored.Outlined.DirectionsWalk, contentDescription = null, tint = Color(0xFF16A34A))
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {

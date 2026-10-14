@@ -30,9 +30,7 @@ import com.messq.app.data.MessQData
 import com.messq.app.data.SlotStatus
 import com.messq.app.data.TimeSlot
 import com.messq.app.navigation.CartState
-import com.messq.app.ui.components.DietaryBadge
-import com.messq.app.ui.components.FoodThumbnail
-import com.messq.app.ui.components.QuantityStepper
+import com.messq.app.ui.components.*
 import com.messq.app.ui.theme.*
 import com.messq.app.viewmodel.OrderViewModel
 
@@ -205,22 +203,27 @@ private fun PreOrderStepIndicator(currentStep: Int) {
             val isCurrent = stepNumber == currentStep
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(CircleShape)
-                        .background(if (isDone || isCurrent) OrangePrimary else Divider),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isDone) {
-                        Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
-                    } else {
-                        Text(
-                            text = "$stepNumber",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isCurrent) Color.White else TextSecondary
-                        )
+                Box(contentAlignment = Alignment.Center) {
+                    if (isCurrent) {
+                        PulsingRadarDot(color = OrangePrimary, dotSize = 8.dp, ringSize = 28.dp)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clip(CircleShape)
+                            .background(if (isDone || isCurrent) OrangePrimary else Divider),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (isDone) {
+                            Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                        } else {
+                            Text(
+                                text = "$stepNumber",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isCurrent) Color.White else TextSecondary
+                            )
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.width(6.dp))
@@ -396,7 +399,7 @@ private fun Step2SlotPicker(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .clickable { onMessSelect(loc) },
+                    .bouncyClick { onMessSelect(loc) },
                 color = if (isSelected) OrangeLight.copy(alpha = 0.5f) else CardBackground,
                 border = BorderStroke(1.5.dp, if (isSelected) OrangePrimary else Divider),
                 shadowElevation = 1.dp
@@ -432,7 +435,7 @@ private fun Step2SlotPicker(
                     border = if (isSelected) null else BorderStroke(1.dp, Divider),
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { onDateSelect(day) }
+                        .bouncyClick { onDateSelect(day) }
                 ) {
                     Text(
                         text = day,
@@ -460,7 +463,7 @@ private fun Step2SlotPicker(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .clickable(enabled = !isFull) { onSlotSelect(slot) },
+                    .bouncyClick(enabled = !isFull) { onSlotSelect(slot) },
                 color = when {
                     isFull -> Color(0xFFF1F5F9)
                     isSelected -> OrangeLight.copy(alpha = 0.5f)
@@ -608,7 +611,9 @@ private fun Step3PaymentSummary(
         Spacer(modifier = Modifier.height(10.dp))
 
         Surface(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .holographicSweep(),
             shape = RoundedCornerShape(16.dp),
             color = Color(0xFF0F172A),
             shadowElevation = 3.dp

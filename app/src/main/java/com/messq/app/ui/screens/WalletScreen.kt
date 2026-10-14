@@ -41,7 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.messq.app.data.MessQData
 import com.messq.app.data.WalletTransaction
 import com.messq.app.navigation.CartState
-import com.messq.app.ui.components.MessQBottomNav
+import com.messq.app.ui.components.*
 import com.messq.app.ui.theme.*
 import com.messq.app.viewmodel.HomeViewModel
 
@@ -113,12 +113,7 @@ fun WalletScreen(
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(7.dp)
-                                    .clip(CircleShape)
-                                    .background(SuccessGreen)
-                            )
+                            PulsingRadarDot(color = SuccessGreen, dotSize = 6.dp, ringSize = 14.dp)
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "NFC Active",
@@ -442,6 +437,7 @@ private fun VirtualMessCard(
                         )
                     )
                 )
+                .holographicSweep()
                 .padding(22.dp)
         ) {
             Column {
@@ -557,7 +553,7 @@ private fun QuickAddBalanceSection(onSelectPreset: (Int) -> Unit) {
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(14.dp))
-                        .clickable { onSelectPreset(amount) },
+                        .bouncyClick { onSelectPreset(amount) },
                     color = CardBackground,
                     border = BorderStroke(1.dp, Divider),
                     shadowElevation = 2.dp

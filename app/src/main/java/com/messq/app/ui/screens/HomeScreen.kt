@@ -35,11 +35,7 @@ import com.messq.app.data.MenuItem
 import com.messq.app.data.MessLocation
 import com.messq.app.data.MessQData
 import com.messq.app.navigation.CartState
-import com.messq.app.navigation.Screen
-import com.messq.app.ui.components.DietaryBadge
-import com.messq.app.ui.components.FoodThumbnail
-import com.messq.app.ui.components.MessQBottomNav
-import com.messq.app.ui.components.QuantityStepper
+import com.messq.app.ui.components.*
 import com.messq.app.ui.theme.*
 import com.messq.app.viewmodel.HomeViewModel
 
@@ -364,7 +360,7 @@ private fun LiveCrowdStatusHeroCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
-            .clickable(onClick = onViewDetails),
+            .bouncyClick(onClick = onViewDetails),
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = CardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
@@ -376,12 +372,7 @@ private fun LiveCrowdStatusHeroCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .background(crowdColor)
-                    )
+                    PulsingRadarDot(color = crowdColor, dotSize = 7.dp, ringSize = 16.dp)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = location.name,
@@ -596,7 +587,7 @@ private fun ActionTile(
     Surface(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick),
+            .bouncyClick(onClick = onClick),
         color = CardBackground,
         shadowElevation = 2.dp,
         border = BorderStroke(1.dp, Divider)
@@ -651,19 +642,12 @@ private fun FeaturedDishCard(
                 )
 
                 if (item.tag.isNotEmpty()) {
-                    Surface(
-                        shape = RoundedCornerShape(bottomEnd = 8.dp),
-                        color = OrangePrimary,
-                        modifier = Modifier.align(Alignment.TopStart)
-                    ) {
-                        Text(
-                            text = item.tag,
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                        )
-                    }
+                    ShimmeringSpecialTag(
+                        text = item.tag,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(6.dp)
+                    )
                 }
 
                 Box(

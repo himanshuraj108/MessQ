@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.messq.app.data.ChatMessage
+import com.messq.app.ui.components.*
 import com.messq.app.ui.theme.*
 import com.messq.app.viewmodel.ChatViewModel
 import kotlinx.coroutines.launch
@@ -99,12 +100,7 @@ fun AIAssistantScreen(
                                 color = TextPrimary
                             )
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(7.dp)
-                                        .clip(CircleShape)
-                                        .background(SuccessGreen)
-                                )
+                                PulsingRadarDot(color = SuccessGreen, dotSize = 6.dp, ringSize = 14.dp)
                                 Spacer(modifier = Modifier.width(5.dp))
                                 Text(
                                     text = "Groq LLaMA 3.3 Active",
@@ -150,7 +146,7 @@ fun AIAssistantScreen(
                             Surface(
                                 shape = RoundedCornerShape(16.dp),
                                 color = OrangeLight,
-                                modifier = Modifier.clickable {
+                                modifier = Modifier.bouncyClick {
                                     chatViewModel.sendMessage(chip)
                                 }
                             ) {
@@ -188,18 +184,20 @@ fun AIAssistantScreen(
 
                         Spacer(modifier = Modifier.width(10.dp))
 
-                        IconButton(
-                            onClick = {
-                                if (inputText.isNotBlank()) {
-                                    val textToSend = inputText.trim()
-                                    inputText = ""
-                                    chatViewModel.sendMessage(textToSend)
-                                }
-                            },
+                        Box(
                             modifier = Modifier
                                 .size(48.dp)
                                 .clip(CircleShape)
                                 .background(OrangePrimary)
+                                .bouncyClick(
+                                    enabled = inputText.isNotBlank(),
+                                    onClick = {
+                                        val textToSend = inputText.trim()
+                                        inputText = ""
+                                        chatViewModel.sendMessage(textToSend)
+                                    }
+                                ),
+                            contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.Send,

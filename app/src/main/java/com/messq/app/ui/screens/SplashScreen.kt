@@ -17,7 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.messq.app.ui.components.MessQBrandLogo
+import com.messq.app.ui.components.*
 import com.messq.app.ui.theme.OrangeDark
 import com.messq.app.ui.theme.OrangePrimary
 import kotlinx.coroutines.delay
@@ -88,6 +88,10 @@ fun SplashScreen(onNavigateToLogin: () -> Unit) {
                 modifier = Modifier.scale(logoScale),
                 contentAlignment = Alignment.Center
             ) {
+                ConcentricShockwave(
+                    color = Color.White.copy(alpha = 0.25f),
+                    modifier = Modifier.size(190.dp)
+                )
                 MessQBrandLogo(
                     badgeSize = 100.dp,
                     showTagline = true,
