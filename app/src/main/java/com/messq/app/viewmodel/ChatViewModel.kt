@@ -1,4 +1,4 @@
-﻿package com.messq.app.viewmodel
+package com.messq.app.viewmodel
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
@@ -15,7 +15,7 @@ class ChatViewModel : ViewModel() {
 
     val messages = mutableStateListOf(
         ChatMessage(
-            text = "Hello! I am MessQ Assistant. I can help you with today's menu, crowd status, slot booking, and nutrition info. How can I help?",
+            text = "Hello! I am BitePass Assistant. I can help you with today's menu, crowd status, slot booking, and nutrition info. How can I help?",
             isUser = false
         )
     )

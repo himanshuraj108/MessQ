@@ -1,4 +1,4 @@
-# MessQ - Smart Campus Mess Management System
+# BitePass - Smart Campus Dining & Pass Management System
 
 A high-scale smart mess management, queue tracking, and meal pre-ordering Android application built with **Jetpack Compose**, **Firebase**, and **Groq AI (LLaMA 3.3)**. Designed to serve 40,000+ students and campus dining halls.
 
@@ -6,7 +6,7 @@ A high-scale smart mess management, queue tracking, and meal pre-ordering Androi
 
 - **Live Crowd Monitoring & Wait Time Analytics**: Real-time crowd gauge and hourly forecast to minimize queue wait times.
 - **Pre-Order Meals & Time Slot Booking**: 3-step ordering flow (Review, Slot Selection, Confirmation) with automated token generation.
-- **AI Dining Assistant**: Integrated AI assistant powered by Groq (LLaMA 3.3 70B) for dietary queries, menu recommendations, and mess status.
+- **AI Dining Assistant**: Integrated AI concierge powered by Groq (LLaMA 3.3 70B) for dietary queries, menu recommendations, and mess status.
 - **Dynamic Digital Menu**: Categorized menu (Breakfast, Lunch, Dinner, Snacks) with dietary indicators (Veg/Non-Veg) and real-time cart management.
 - **Order Management & Digital Receipts**: Live order tracking, detailed digital receipts, and reorder history.
 - **Account & Security**: Student and Staff authentication, password recovery via Firebase Auth, and campus wallet balance.
@@ -15,7 +15,7 @@ A high-scale smart mess management, queue tracking, and meal pre-ordering Androi
 
 | Screen | Description |
 |---|---|
-| Splash | MQ badge animated launch screen |
+| Splash | BP badge animated launch screen |
 | Login / Register | Student and Staff role switcher with secure credentials login |
 | Forgot Password | Two-state password recovery via Firebase reset link |
 | Home Dashboard | Live crowd arc gauge, quick action grid, and today's specials |
@@ -25,6 +25,8 @@ A high-scale smart mess management, queue tracking, and meal pre-ordering Androi
 | Order Confirmed | Animated success confirmation, generated order ID, and digital receipt |
 | Order History | Status-filtered order ledger with reorder capabilities |
 | AI Assistant | Conversational interface for menu queries and dining recommendations |
+| Wallet | Digital campus pass, NFC simulation, balance management, and top-up sheet |
+| Profile | Student ID card, dietary preferences, and account controls |
 
 ## Tech Stack
 
@@ -58,4 +60,4 @@ Output APK will be generated at:
 
 ---
 
-*MessQ - Good Food. Better Days.*
+*BitePass - Smart Campus Dining*

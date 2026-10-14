@@ -10,6 +10,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -211,7 +213,7 @@ fun ProfileScreen(
                 ) {
                     Column(modifier = Modifier.padding(vertical = 6.dp)) {
                         ProfileOptionRow(
-                            icon = Icons.Outlined.ReceiptLong,
+                            icon = Icons.AutoMirrored.Outlined.ReceiptLong,
                             title = "Meal Receipts & Order History",
                             subtitle = "View digital tokens and past transactions",
                             onClick = onNavigateToOrderHistory
@@ -232,7 +234,7 @@ fun ProfileScreen(
                         )
                         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Divider)
                         ProfileOptionRow(
-                            icon = Icons.Outlined.Logout,
+                            icon = Icons.AutoMirrored.Outlined.Logout,
                             title = "Sign Out",
                             subtitle = "Log out from this device",
                             iconTint = ErrorRed,
@@ -311,7 +313,7 @@ fun ProfileScreen(
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
             title = { Text("Sign Out", fontWeight = FontWeight.Bold) },
-            text = { Text("Are you sure you want to log out of your MessQ campus account?") },
+            text = { Text("Are you sure you want to log out of your BitePass campus account?") },
             confirmButton = {
                 Button(
                     onClick = {

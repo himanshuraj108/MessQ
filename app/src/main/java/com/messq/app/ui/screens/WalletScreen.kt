@@ -91,7 +91,7 @@ fun WalletScreen(
                         Spacer(modifier = Modifier.width(6.dp))
                         Column {
                             Text(
-                                text = "Digital Mess Wallet",
+                                text = "BitePass Digital Wallet",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary
@@ -405,7 +405,7 @@ fun WalletScreen(
             },
             text = {
                 Text(
-                    text = "Rs. $lastAddedAmount has been added to your MessQ Digital Wallet. Your new available balance is Rs. $currentBalance.",
+                    text = "Rs. $lastAddedAmount has been added to your BitePass Digital Wallet. Your new available balance is Rs. $currentBalance.",
                     fontSize = 14.sp,
                     color = TextSecondary
                 )
@@ -452,14 +452,14 @@ private fun VirtualMessCard(
                 ) {
                     Column {
                         Text(
-                            text = "CAMPUS MESS PASS",
+                            text = "BITEPASS CAMPUS PASS",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Black,
                             letterSpacing = 1.5.sp,
                             color = OrangePrimary
                         )
                         Text(
-                            text = "MessQ Smart Card",
+                            text = "BitePass Smart Card",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White

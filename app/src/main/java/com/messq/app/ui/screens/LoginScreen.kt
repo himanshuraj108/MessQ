@@ -318,10 +318,10 @@ fun LoginScreen(
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
                                 .clickable {
-                                    email = "student@messq.app"
+                                    email = "student@bitepass.app"
                                     password = "password123"
                                     name = "Himanshu Raj"
-                                    authViewModel.login("student@messq.app", "password123")
+                                    authViewModel.login("student@bitepass.app", "password123")
                                 },
                             color = OrangeLight.copy(alpha = 0.5f),
                             border = BorderStroke(1.dp, OrangePrimary.copy(alpha = 0.3f))
@@ -350,7 +350,7 @@ fun LoginScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = if (isRegisterMode) "Already have an account? " else "New to MessQ? ",
+                                text = if (isRegisterMode) "Already have an account? " else "New to BitePass? ",
                                 fontSize = 13.sp,
                                 color = TextSecondary
                             )

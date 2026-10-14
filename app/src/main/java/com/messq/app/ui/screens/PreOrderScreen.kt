@@ -630,7 +630,7 @@ private fun Step3PaymentSummary(
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        Text("Digital Mess Wallet", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        Text("BitePass Digital Wallet", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         Text("Available Balance: Rs. 500", fontSize = 12.sp, color = Color.White.copy(alpha = 0.7f))
                     }
                 }

@@ -1,4 +1,4 @@
-﻿package com.messq.app.data.groq
+package com.messq.app.data.groq
 
 import com.messq.app.Constants
 import okhttp3.*
@@ -21,7 +21,7 @@ class GroqRepository {
             val messagesArray = JSONArray()
             messagesArray.put(JSONObject().apply {
                 put("role", "system")
-                put("content", Constants.MESSQ_SYSTEM_PROMPT)
+                put("content", Constants.BITEPASS_SYSTEM_PROMPT)
             })
             messages.takeLast(10).forEach { msg ->
                 messagesArray.put(JSONObject().apply {

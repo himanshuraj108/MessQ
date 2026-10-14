@@ -45,10 +45,10 @@ fun OrderHistoryScreen(
 
     val sampleOrders = remember {
         listOf(
-            OrderData("MQ8492", "Paneer Butter Masala Thali x1, Cold Coffee x1", 110, "Completed", "12:30 - 01:00 PM", "Today", System.currentTimeMillis() - 3600000),
-            OrderData("MQ7291", "Aloo Paratha with Curd x2, Filter Coffee x1", 75, "Upcoming", "08:00 - 08:30 AM", "Tomorrow", System.currentTimeMillis()),
-            OrderData("MQ6104", "Special Chicken Curry Meal x1, Tawa Roti x2", 120, "Completed", "07:30 - 08:00 PM", "Yesterday", System.currentTimeMillis() - 86400000),
-            OrderData("MQ4922", "Cheese Masala Maggi x2, Fruit Juice x1", 85, "Cancelled", "04:30 - 05:00 PM", "12 Oct 2026", System.currentTimeMillis() - 172800000)
+            OrderData("BP8492", "Paneer Butter Masala Thali x1, Cold Coffee x1", 110, "Completed", "12:30 - 01:00 PM", "Today", System.currentTimeMillis() - 3600000),
+            OrderData("BP7291", "Aloo Paratha with Curd x2, Filter Coffee x1", 75, "Upcoming", "08:00 - 08:30 AM", "Tomorrow", System.currentTimeMillis()),
+            OrderData("BP6104", "Special Chicken Curry Meal x1, Tawa Roti x2", 120, "Completed", "07:30 - 08:00 PM", "Yesterday", System.currentTimeMillis() - 86400000),
+            OrderData("BP4922", "Cheese Masala Maggi x2, Fruit Juice x1", 85, "Cancelled", "04:30 - 05:00 PM", "12 Oct 2026", System.currentTimeMillis() - 172800000)
         )
     }
 
@@ -183,7 +183,7 @@ fun OrderHistoryScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "#MQ-${order.id.takeLast(4).uppercase()}",
+                        text = "#BP-${order.id.takeLast(4).uppercase()}",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Black,
                         fontFamily = FontFamily.Monospace,
@@ -247,7 +247,7 @@ private fun OrderHistoryCard(
         else -> Surface
     }
 
-    val orderIdShort = "#MQ" + order.id.takeLast(4).uppercase()
+    val orderIdShort = "#BP" + order.id.takeLast(4).uppercase()
     val dateDisplay = if (order.date.isNotEmpty()) order.date else {
         SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(order.createdAt))
     }

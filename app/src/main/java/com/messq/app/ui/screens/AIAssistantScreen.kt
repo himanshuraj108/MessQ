@@ -93,7 +93,7 @@ fun AIAssistantScreen(
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "MessQ AI Concierge",
+                                text = "BitePass AI Concierge",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary
@@ -120,7 +120,7 @@ fun AIAssistantScreen(
                         messages.clear()
                         messages.add(
                             ChatMessage(
-                                text = "Hello! I am your MessQ Campus Assistant. I can help you with today's menu, nutrition info, live queue wait times, or dietary recommendations. What can I do for you?",
+                                text = "Hello! I am your BitePass Campus Assistant. I can help you with today's menu, nutrition info, live queue wait times, or dietary recommendations. What can I do for you?",
                                 isUser = false,
                                 timestamp = "Just now"
                             )

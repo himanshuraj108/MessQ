@@ -114,7 +114,7 @@ fun SplashScreen(onNavigateToLogin: () -> Unit) {
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Campus Dining Network • Real-time Queues",
+                        text = "BitePass Campus Network • Real-time Queues",
                         fontSize = 12.sp,
                         color = Color.White.copy(alpha = 0.65f),
                         letterSpacing = 0.5.sp
@@ -136,7 +136,7 @@ fun SplashScreen(onNavigateToLogin: () -> Unit) {
             ) {
                 SplashBouncingDots()
                 Text(
-                    text = "Initializing campus dining services...",
+                    text = "Initializing BitePass dining services...",
                     fontSize = 12.sp,
                     color = Color.White.copy(alpha = 0.75f),
                     textAlign = TextAlign.Center

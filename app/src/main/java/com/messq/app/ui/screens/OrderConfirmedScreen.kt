@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -44,7 +45,7 @@ fun OrderConfirmedScreen(
         val chars = "ABCDEFGHJKLMNPQRSTUVWXYZ"
         val letters = (1..2).map { chars.random() }.joinToString("")
         val digits = (100..999).random()
-        "MQ-$letters$digits"
+        "BP-$letters$digits"
     }
 
     LaunchedEffect(Unit) {
@@ -72,7 +73,7 @@ fun OrderConfirmedScreen(
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
                     ) {
-                        Icon(Icons.Outlined.ReceiptLong, contentDescription = null, tint = Color.White)
+                        Icon(Icons.AutoMirrored.Outlined.ReceiptLong, contentDescription = null, tint = Color.White)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "View Digital Token & Receipt",

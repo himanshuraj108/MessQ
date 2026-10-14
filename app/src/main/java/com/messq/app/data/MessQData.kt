@@ -82,13 +82,13 @@ object MessQData {
         roomNo = "Room 304",
         mealPlan = "Premium 3-Meal Plan",
         isPureVeg = false,
-        qrToken = "MQ-PASS-12104892-2026"
+        qrToken = "BP-PASS-12104892-2026"
     )
 
     val sampleTransactions = listOf(
-        WalletTransaction("TXN-9021", "Breakfast Pre-Order (#MQ-8192)", 50, false, "Today", "08:15 AM"),
+        WalletTransaction("TXN-9021", "Breakfast Pre-Order (#BP-8192)", 50, false, "Today", "08:15 AM"),
         WalletTransaction("TXN-8842", "Wallet Auto-Topup via UPI", 1000, true, "Yesterday", "06:40 PM"),
-        WalletTransaction("TXN-7612", "Dinner - Paneer Thali (#MQ-7721)", 95, false, "14 Oct", "08:30 PM"),
+        WalletTransaction("TXN-7612", "Dinner - Paneer Thali (#BP-7721)", 95, false, "14 Oct", "08:30 PM"),
         WalletTransaction("TXN-6510", "Snacks - Cold Coffee & Samosa", 45, false, "13 Oct", "05:10 PM"),
         WalletTransaction("TXN-5421", "Mess Security Deposit Refund", 500, true, "10 Oct", "11:20 AM")
     )
