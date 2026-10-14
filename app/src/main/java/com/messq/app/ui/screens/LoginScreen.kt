@@ -314,29 +314,30 @@ fun LoginScreen(
                         Spacer(modifier = Modifier.height(14.dp))
 
                         Surface(
+                            onClick = {
+                                email = "student@bitepass.app"
+                                password = "password123"
+                                name = "Himanshu Raj"
+                                localError = ""
+                                authViewModel.demoLogin()
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .bouncyClick {
-                                    email = "student@bitepass.app"
-                                    password = "password123"
-                                    name = "Himanshu Raj"
-                                    localError = ""
-                                    authViewModel.demoLogin()
-                                },
+                                .clip(RoundedCornerShape(12.dp)),
+                            shape = RoundedCornerShape(12.dp),
                             color = OrangeLight.copy(alpha = 0.5f),
                             border = BorderStroke(1.dp, OrangePrimary.copy(alpha = 0.3f))
                         ) {
                             Row(
-                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 14.dp),
+                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 14.dp),
                                 horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(Icons.Outlined.FlashOn, contentDescription = null, tint = OrangePrimary, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Outlined.FlashOn, contentDescription = null, tint = OrangePrimary, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "One-Tap Demo Login (Himanshu)",
-                                    fontSize = 12.sp,
+                                    fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = OrangePrimary
                                 )

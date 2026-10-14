@@ -9,29 +9,36 @@ import com.messq.app.data.firebase.MenuRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 class MenuViewModel : ViewModel() {
     private val repo = MenuRepository()
 
-    private val _menuItems = MutableStateFlow<List<MenuItem>>(emptyList())
+    private val allDefaultItems = MessQData.breakfastItems + MessQData.lunchItems + MessQData.dinnerItems + MessQData.snackItems
+    private val _menuItems = MutableStateFlow<List<MenuItem>>(allDefaultItems)
     val menuItems: StateFlow<List<MenuItem>> = _menuItems
 
-    private val _isLoading = MutableStateFlow(true)
+    private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    init { loadMenu() }
+    init {
+        loadMenu()
+    }
 
     fun loadMenu() {
         viewModelScope.launch {
-            _isLoading.value = true
-            repo.seedMenuIfEmpty()
-            val items = repo.getMenuItems()
-            _menuItems.value = if (items.isEmpty()) {
-                MessQData.breakfastItems + MessQData.lunchItems + MessQData.dinnerItems + MessQData.snackItems
-            } else {
-                items
+            try {
+                withTimeoutOrNull(2500L) {
+                    repo.seedMenuIfEmpty()
+                    val items = repo.getMenuItems()
+                    if (items.isNotEmpty()) {
+                        _menuItems.value = items
+                    }
+                }
+            } catch (e: Exception) {
+            } finally {
+                _isLoading.value = false
             }
-            _isLoading.value = false
         }
     }
 

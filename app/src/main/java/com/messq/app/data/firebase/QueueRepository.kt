@@ -1,7 +1,8 @@
-﻿package com.messq.app.data.firebase
+package com.messq.app.data.firebase
 
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeoutOrNull
 
 data class QueueStatusData(
     val messId: String = "main",
@@ -15,18 +16,20 @@ class QueueRepository {
 
     suspend fun getQueueStatus(messId: String = "main"): QueueStatusData {
         return try {
-            val doc = db.collection("queue_status").document(messId).get().await()
-            if (doc.exists()) {
-                QueueStatusData(
-                    messId = messId,
-                    currentCount = (doc.getLong("currentCount") ?: 0).toInt(),
-                    maxCapacity = (doc.getLong("maxCapacity") ?: 200).toInt(),
-                    waitTimeMinutes = (doc.getLong("waitTimeMinutes") ?: 0).toInt()
-                )
-            } else {
-                seedQueueIfEmpty(messId)
-                QueueStatusData(messId = messId, currentCount = 45, maxCapacity = 200, waitTimeMinutes = 5)
-            }
+            withTimeoutOrNull(2000L) {
+                val doc = db.collection("queue_status").document(messId).get().await()
+                if (doc.exists()) {
+                    QueueStatusData(
+                        messId = messId,
+                        currentCount = (doc.getLong("currentCount") ?: 45).toInt(),
+                        maxCapacity = (doc.getLong("maxCapacity") ?: 200).toInt(),
+                        waitTimeMinutes = (doc.getLong("waitTimeMinutes") ?: 5).toInt()
+                    )
+                } else {
+                    seedQueueIfEmpty(messId)
+                    QueueStatusData(messId = messId, currentCount = 45, maxCapacity = 200, waitTimeMinutes = 5)
+                }
+            } ?: QueueStatusData(messId = messId, currentCount = 45, maxCapacity = 200, waitTimeMinutes = 5)
         } catch (e: Exception) {
             QueueStatusData(messId = messId, currentCount = 45, maxCapacity = 200, waitTimeMinutes = 5)
         }
@@ -34,9 +37,11 @@ class QueueRepository {
 
     private suspend fun seedQueueIfEmpty(messId: String) {
         try {
-            db.collection("queue_status").document(messId).set(
-                mapOf("currentCount" to 45, "maxCapacity" to 200, "waitTimeMinutes" to 5)
-            ).await()
+            withTimeoutOrNull(1500L) {
+                db.collection("queue_status").document(messId).set(
+                    mapOf("currentCount" to 45, "maxCapacity" to 200, "waitTimeMinutes" to 5)
+                ).await()
+            }
         } catch (e: Exception) { }
     }
 
