@@ -58,6 +58,7 @@ fun HomeScreen(
     val userName by homeViewModel.userName.collectAsStateWithLifecycle()
     val walletBalance by homeViewModel.walletBalance.collectAsStateWithLifecycle()
     var searchQuery by remember { mutableStateOf("") }
+    var selectedDetailDish by remember { mutableStateOf<MenuItem?>(null) }
 
     val mainMess = MessQData.messLocations.first { it.isMain }
     val featuredDishes = remember { MessQData.allMenuItems.filter { it.tag.isNotEmpty() }.take(6) }
@@ -101,7 +102,7 @@ fun HomeScreen(
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.clickable(onClick = onNavigateToProfile)
+                            modifier = Modifier.bouncyClick(onClick = onNavigateToProfile)
                         ) {
                             Box(
                                 modifier = Modifier
@@ -142,7 +143,7 @@ fun HomeScreen(
                             Surface(
                                 shape = RoundedCornerShape(20.dp),
                                 color = Color.White.copy(alpha = 0.2f),
-                                modifier = Modifier.clickable(onClick = onNavigateToWallet)
+                                modifier = Modifier.bouncyClick(onClick = onNavigateToWallet)
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -189,7 +190,7 @@ fun HomeScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp)
-                            .clickable(onClick = onNavigateToMenu),
+                            .bouncyClick(onClick = onNavigateToMenu),
                         shape = RoundedCornerShape(14.dp),
                         color = CardBackground,
                         shadowElevation = 4.dp
@@ -279,7 +280,8 @@ fun HomeScreen(
                         item = dish,
                         quantity = cartState.getQuantity(dish),
                         onAdd = { cartState.addItem(dish) },
-                        onRemove = { cartState.removeItem(dish) }
+                        onRemove = { cartState.removeItem(dish) },
+                        onClick = { selectedDetailDish = dish }
                     )
                 }
             }
@@ -307,7 +309,10 @@ fun HomeScreen(
                     )
                 }
 
-                TextButton(onClick = onNavigateToQueue) {
+                TextButton(
+                    onClick = onNavigateToQueue,
+                    modifier = Modifier.bouncyClick(onClick = onNavigateToQueue)
+                ) {
                     Text("Heatmap", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = OrangePrimary)
                 }
             }
@@ -324,6 +329,17 @@ fun HomeScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        selectedDetailDish?.let { dish ->
+            DishDetailDialog(
+                item = dish,
+                quantity = cartState.getQuantity(dish),
+                onAdd = { cartState.addItem(dish) },
+                onRemove = { cartState.removeItem(dish) },
+                onDismiss = { selectedDetailDish = null },
+                onProceedToCheckout = onNavigateToPreOrder
+            )
         }
     }
 }
@@ -625,10 +641,13 @@ private fun FeaturedDishCard(
     item: MenuItem,
     quantity: Int,
     onAdd: () -> Unit,
-    onRemove: () -> Unit
+    onRemove: () -> Unit,
+    onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.width(180.dp),
+        modifier = Modifier
+            .width(180.dp)
+            .bouncyClick(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = CardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
@@ -711,7 +730,7 @@ private fun OtherMessCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .clickable(onClick = onSelect),
+            .bouncyClick(onClick = onSelect),
         color = CardBackground,
         shadowElevation = 1.dp,
         border = BorderStroke(1.dp, Divider)

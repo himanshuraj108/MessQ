@@ -48,6 +48,7 @@ fun MenuScreen(
     var selectedCategory by remember { mutableStateOf<MealCategory?>(null) }
     var vegOnlyFilter by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
+    var selectedDetailDish by remember { mutableStateOf<MenuItem?>(null) }
 
     val allItems = remember { MessQData.allMenuItems }
 
@@ -104,7 +105,7 @@ fun MenuScreen(
                             shape = RoundedCornerShape(20.dp),
                             color = if (vegOnlyFilter) Color(0xFF16A34A).copy(alpha = 0.15f) else CardBackground,
                             border = BorderStroke(1.dp, if (vegOnlyFilter) Color(0xFF16A34A) else Divider),
-                            modifier = Modifier.clickable { vegOnlyFilter = !vegOnlyFilter }
+                            modifier = Modifier.bouncyClick { vegOnlyFilter = !vegOnlyFilter }
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -330,10 +331,22 @@ fun MenuScreen(
                         item = dish,
                         quantity = cartState.getQuantity(dish),
                         onAdd = { cartState.addItem(dish) },
-                        onRemove = { cartState.removeItem(dish) }
+                        onRemove = { cartState.removeItem(dish) },
+                        onClick = { selectedDetailDish = dish }
                     )
                 }
             }
+        }
+
+        selectedDetailDish?.let { dish ->
+            DishDetailDialog(
+                item = dish,
+                quantity = cartState.getQuantity(dish),
+                onAdd = { cartState.addItem(dish) },
+                onRemove = { cartState.removeItem(dish) },
+                onDismiss = { selectedDetailDish = null },
+                onProceedToCheckout = onNavigateToPreOrder
+            )
         }
     }
 }
@@ -366,10 +379,13 @@ private fun MenuDishItemCard(
     item: MenuItem,
     quantity: Int,
     onAdd: () -> Unit,
-    onRemove: () -> Unit
+    onRemove: () -> Unit,
+    onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .bouncyClick(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = CardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)

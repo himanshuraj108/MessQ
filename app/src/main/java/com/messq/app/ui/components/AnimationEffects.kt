@@ -7,6 +7,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -95,7 +96,7 @@ fun Modifier.bouncyClick(
         targetValue = if (isPressed && enabled) 0.94f else 1f,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
+            stiffness = Spring.StiffnessMedium
         ),
         label = "bouncyScale"
     )
@@ -104,7 +105,7 @@ fun Modifier.bouncyClick(
         .scale(scale)
         .clickable(
             interactionSource = interactionSource,
-            indication = null,
+            indication = ripple(color = Color(0xFFF97316).copy(alpha = 0.20f)),
             enabled = enabled,
             onClick = onClick
         )
