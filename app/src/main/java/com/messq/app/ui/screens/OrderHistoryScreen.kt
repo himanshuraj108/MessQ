@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -36,6 +37,7 @@ fun OrderHistoryScreen(
     val orders: List<OrderData> by orderViewModel.orders.collectAsStateWithLifecycle()
     val isLoading: Boolean by orderViewModel.isLoading.collectAsStateWithLifecycle()
     var selectedFilter by remember { mutableStateOf("All") }
+    var selectedReceiptOrder by remember { mutableStateOf<OrderData?>(null) }
 
     LaunchedEffect(Unit) { orderViewModel.loadHistory() }
 
@@ -43,81 +45,79 @@ fun OrderHistoryScreen(
 
     val sampleOrders = remember {
         listOf(
-            OrderData("MQ001", "Dal Rice x1, Paneer Curry x1", 105, "Completed", "12:00 - 12:30 PM", "10 Sep 2026", System.currentTimeMillis() - 3600000),
-            OrderData("MQ002", "Aloo Paratha x2, Filter Coffee x1", 75, "Upcoming", "08:00 - 08:30 AM", "11 Sep 2026", System.currentTimeMillis()),
-            OrderData("MQ003", "Rajma Chawal x1, Roti Sabzi x2", 130, "Completed", "07:00 - 07:30 PM", "09 Sep 2026", System.currentTimeMillis() - 86400000),
-            OrderData("MQ004", "Samosa x3, Cold Coffee x1", 60, "Cancelled", "04:00 - 04:30 PM", "08 Sep 2026", System.currentTimeMillis() - 172800000)
+            OrderData("MQ8492", "Paneer Butter Masala Thali x1, Cold Coffee x1", 110, "Completed", "12:30 - 01:00 PM", "Today", System.currentTimeMillis() - 3600000),
+            OrderData("MQ7291", "Aloo Paratha with Curd x2, Filter Coffee x1", 75, "Upcoming", "08:00 - 08:30 AM", "Tomorrow", System.currentTimeMillis()),
+            OrderData("MQ6104", "Special Chicken Curry Meal x1, Tawa Roti x2", 120, "Completed", "07:30 - 08:00 PM", "Yesterday", System.currentTimeMillis() - 86400000),
+            OrderData("MQ4922", "Cheese Masala Maggi x2, Fruit Juice x1", 85, "Cancelled", "04:30 - 05:00 PM", "12 Oct 2026", System.currentTimeMillis() - 172800000)
         )
     }
 
     val displayOrders = if (orders.isEmpty()) sampleOrders else orders
     val filteredOrders = if (selectedFilter == "All") displayOrders
-        else displayOrders.filter { it.status == selectedFilter }
+    else displayOrders.filter { it.status == selectedFilter }
 
     Scaffold(
         topBar = {
-            Surface(color = Color.White, shadowElevation = 2.dp) {
-                Column {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = CardBackground,
+                shadowElevation = 2.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .statusBarsPadding()
+                        .padding(horizontal = 8.dp, vertical = 8.dp)
+                ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                            .padding(horizontal = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = onBack) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back",
-                                tint = Color(0xFF1A1A1A)
+                                tint = TextPrimary
                             )
                         }
                         Spacer(modifier = Modifier.width(4.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "My Orders",
+                                text = "Order Receipts & History",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1A1A1A)
+                                color = TextPrimary
                             )
                             Text(
-                                text = "${displayOrders.size} orders total",
+                                text = "${displayOrders.size} meals recorded on campus ledger",
                                 fontSize = 12.sp,
-                                color = Color(0xFF9E9E9E)
-                            )
-                        }
-                        IconButton(onClick = {}) {
-                            Icon(
-                                Icons.Outlined.FilterList,
-                                contentDescription = "Filter",
-                                tint = OrangePrimary
+                                color = TextSecondary
                             )
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(6.dp))
+
                     LazyRow(
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(filters) { filter ->
                             val isSelected = filter == selectedFilter
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(20.dp))
-                                    .background(if (isSelected) OrangePrimary else Color.White)
-                                    .border(
-                                        1.dp,
-                                        if (isSelected) OrangePrimary else Color(0xFFEEEEEE),
-                                        RoundedCornerShape(20.dp)
-                                    )
-                                    .clickable { selectedFilter = filter }
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                contentAlignment = Alignment.Center
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = if (isSelected) OrangePrimary else CardBackground,
+                                border = if (isSelected) null else BorderStroke(1.dp, Divider),
+                                shadowElevation = if (isSelected) 2.dp else 0.dp,
+                                modifier = Modifier.clickable { selectedFilter = filter }
                             ) {
                                 Text(
                                     text = filter,
-                                    fontSize = 13.sp,
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (isSelected) Color.White else Color(0xFF757575)
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) Color.White else TextSecondary,
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
                                 )
                             }
                         }
@@ -125,7 +125,7 @@ fun OrderHistoryScreen(
                 }
             }
         },
-        containerColor = Color(0xFFFFF8F0)
+        containerColor = WarmWhite
     ) { paddingValues ->
         if (isLoading) {
             Box(
@@ -143,60 +143,140 @@ fun OrderHistoryScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(filteredOrders) { order ->
-                    OrderHistoryCard(order = order)
+                    OrderHistoryCard(
+                        order = order,
+                        onShowReceipt = { selectedReceiptOrder = order }
+                    )
                 }
-                item { Spacer(modifier = Modifier.height(8.dp)) }
+                item { Spacer(modifier = Modifier.height(10.dp)) }
             }
         }
+    }
+
+    selectedReceiptOrder?.let { order ->
+        AlertDialog(
+            onDismissRequest = { selectedReceiptOrder = null },
+            confirmButton = {
+                Button(
+                    onClick = { selectedReceiptOrder = null },
+                    colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Close", color = Color.White)
+                }
+            },
+            title = {
+                Text(
+                    text = "Digital Meal Token Receipt",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "#MQ-${order.id.takeLast(4).uppercase()}",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Black,
+                        fontFamily = FontFamily.Monospace,
+                        color = OrangePrimary
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Surface(
+                        modifier = Modifier
+                            .size(130.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        color = Color.White,
+                        border = BorderStroke(1.5.dp, Divider)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Outlined.QrCode2,
+                                contentDescription = null,
+                                tint = TextPrimary,
+                                modifier = Modifier.size(110.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text(
+                        text = order.items,
+                        fontSize = 13.sp,
+                        color = TextPrimary,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Window: ${order.slot} • Total: Rs. ${order.total}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextSecondary
+                    )
+                }
+            },
+            containerColor = CardBackground,
+            shape = RoundedCornerShape(20.dp)
+        )
     }
 }
 
 @Composable
-private fun OrderHistoryCard(order: OrderData) {
+private fun OrderHistoryCard(
+    order: OrderData,
+    onShowReceipt: () -> Unit
+) {
     val statusColor = when (order.status) {
-        "Completed" -> Color(0xFF4CAF50)
+        "Completed" -> SuccessGreen
         "Upcoming" -> OrangePrimary
-        "Cancelled" -> Color(0xFFF44336)
-        else -> Color(0xFF9E9E9E)
+        "Cancelled" -> ErrorRed
+        else -> TextHint
     }
 
     val statusBg = when (order.status) {
-        "Completed" -> Color(0xFFE8F5E9)
-        "Upcoming" -> Color(0xFFFFF3E0)
-        "Cancelled" -> Color(0xFFFFEBEE)
-        else -> Color(0xFFF5F5F5)
+        "Completed" -> SuccessGreen.copy(alpha = 0.12f)
+        "Upcoming" -> OrangeLight
+        "Cancelled" -> ErrorRed.copy(alpha = 0.12f)
+        else -> Surface
     }
 
-    val orderIdShort = "#MQ" + order.id.take(4).uppercase()
+    val orderIdShort = "#MQ" + order.id.takeLast(4).uppercase()
     val dateDisplay = if (order.date.isNotEmpty()) order.date else {
         SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(order.createdAt))
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onShowReceipt),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = CardBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row {
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Box(
                 modifier = Modifier
                     .width(4.dp)
-                    .height(140.dp)
+                    .height(130.dp)
                     .background(
                         color = statusColor,
-                        shape = RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp)
+                        shape = RoundedCornerShape(topStart = 18.dp, bottomStart = 18.dp)
                     )
             )
 
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 14.dp, end = 16.dp, top = 14.dp, bottom = 14.dp)
+                    .padding(14.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -206,57 +286,54 @@ private fun OrderHistoryCard(order: OrderData) {
                     Text(
                         text = orderIdShort,
                         fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1A1A1A)
+                        fontWeight = FontWeight.Black,
+                        fontFamily = FontFamily.Monospace,
+                        color = TextPrimary
                     )
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(statusBg)
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = statusBg
                     ) {
                         Text(
                             text = order.status,
                             fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = statusColor
+                            fontWeight = FontWeight.Bold,
+                            color = statusColor,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
                     text = order.items,
                     fontSize = 13.sp,
-                    color = Color(0xFF424242),
+                    color = TextPrimary,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    lineHeight = 18.sp
+                    overflow = TextOverflow.Ellipsis
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         Icons.Outlined.Schedule,
                         contentDescription = null,
                         modifier = Modifier.size(13.dp),
-                        tint = Color(0xFF9E9E9E)
+                        tint = TextSecondary
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = if (order.slot.isNotEmpty()) "${order.slot} · $dateDisplay" else dateDisplay,
-                        fontSize = 12.sp,
-                        color = Color(0xFF9E9E9E)
+                        text = if (order.slot.isNotEmpty()) "${order.slot} • $dateDisplay" else dateDisplay,
+                        fontSize = 11.sp,
+                        color = TextSecondary
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                HorizontalDivider(color = Color(0xFFF5F5F5))
-
                 Spacer(modifier = Modifier.height(10.dp))
+                HorizontalDivider(color = Divider)
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -266,38 +343,35 @@ private fun OrderHistoryCard(order: OrderData) {
                     Text(
                         text = "Rs. ${order.total}",
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Black,
                         color = OrangePrimary
                     )
+
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
-                                .border(1.dp, OrangePrimary, RoundedCornerShape(20.dp))
-                                .clickable { }
-                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = OrangeLight,
+                            border = BorderStroke(1.dp, OrangePrimary.copy(alpha = 0.4f)),
+                            modifier = Modifier.clickable(onClick = onShowReceipt)
                         ) {
-                            Text(
-                                text = "Reorder",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = OrangePrimary
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFFF5F6FA))
-                                .clickable { },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.Outlined.Receipt,
-                                contentDescription = "Receipt",
-                                modifier = Modifier.size(16.dp),
-                                tint = Color(0xFF757575)
-                            )
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Outlined.QrCode,
+                                    contentDescription = null,
+                                    tint = OrangePrimary,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "View Pass",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = OrangePrimary
+                                )
+                            }
                         }
                     }
                 }
@@ -315,44 +389,32 @@ private fun EmptyOrdersState(modifier: Modifier = Modifier) {
     ) {
         Box(
             modifier = Modifier
-                .size(120.dp)
+                .size(110.dp)
                 .clip(CircleShape)
-                .background(Color(0xFFFFF3E0)),
+                .background(OrangeLight),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 Icons.Outlined.ShoppingBag,
                 contentDescription = null,
-                modifier = Modifier.size(56.dp),
-                tint = OrangePrimary.copy(alpha = 0.6f)
+                modifier = Modifier.size(54.dp),
+                tint = OrangePrimary
             )
         }
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(18.dp))
         Text(
-            text = "No orders yet",
-            fontSize = 20.sp,
+            text = "No meal orders yet",
+            fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1A1A1A)
+            color = TextPrimary
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "Order your first meal from the mess\nand track it here",
-            fontSize = 14.sp,
-            color = Color(0xFF9E9E9E),
+            text = "Pre-order meals from the menu and track your digital tokens here",
+            fontSize = 13.sp,
+            color = TextSecondary,
             textAlign = TextAlign.Center,
-            lineHeight = 20.sp
+            lineHeight = 18.sp
         )
-        Spacer(modifier = Modifier.height(28.dp))
-        Button(
-            onClick = {},
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary),
-            modifier = Modifier.height(48.dp),
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-        ) {
-            Icon(Icons.Outlined.Restaurant, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Browse Menu", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-        }
     }
 }

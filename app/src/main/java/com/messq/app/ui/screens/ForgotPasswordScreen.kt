@@ -2,12 +2,14 @@ package com.messq.app.ui.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.*
@@ -24,8 +26,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
+import com.messq.app.ui.components.MessQBrandLogo
 import com.messq.app.ui.theme.*
-import kotlinx.coroutines.launch
 
 @Composable
 fun ForgotPasswordScreen(onBack: () -> Unit) {
@@ -33,47 +35,36 @@ fun ForgotPasswordScreen(onBack: () -> Unit) {
     var isSent by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMsg by remember { mutableStateOf("") }
-    val scope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFFF8F0))
+            .background(WarmWhite)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp)
                     .background(
                         brush = Brush.verticalGradient(
-                            colors = listOf(Color(0xFFFF9500), OrangePrimary, Color(0xFFE85D00))
+                            colors = listOf(
+                                Color(0xFFC2410C),
+                                OrangeDark,
+                                OrangePrimary,
+                                Color(0xFFFB923C)
+                            )
                         )
                     )
+                    .statusBarsPadding()
+                    .padding(top = 10.dp, bottom = 44.dp, start = 16.dp, end = 16.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(220.dp)
-                        .offset(x = (-60).dp, y = (-60).dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.06f))
-                )
-                Box(
-                    modifier = Modifier
-                        .size(150.dp)
-                        .align(Alignment.BottomEnd)
-                        .offset(x = 50.dp, y = 50.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.06f))
-                )
-
                 IconButton(
                     onClick = onBack,
-                    modifier = Modifier
-                        .padding(top = 16.dp, start = 8.dp)
-                        .align(Alignment.TopStart)
+                    modifier = Modifier.align(Alignment.TopStart)
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
@@ -85,36 +76,25 @@ fun ForgotPasswordScreen(onBack: () -> Unit) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .align(Alignment.Center)
-                        .padding(top = 20.dp),
+                        .padding(top = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.2f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Outlined.LockReset,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
+                    MessQBrandLogo(
+                        badgeSize = 68.dp,
+                        showTagline = false,
+                        isDarkThemeOnHeader = true
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "Reset Password",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.ExtraBold,
+                        text = "Password Recovery",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "We'll send you a reset link",
-                        fontSize = 13.sp,
-                        color = Color.White.copy(alpha = 0.8f)
+                        text = "We will send an instant recovery email",
+                        fontSize = 12.sp,
+                        color = Color.White.copy(alpha = 0.85f)
                     )
                 }
             }
@@ -123,100 +103,72 @@ fun ForgotPasswordScreen(onBack: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .offset(y = (-24).dp)
+                    .padding(horizontal = 18.dp)
             ) {
-                AnimatedContent(
-                    targetState = isSent,
-                    transitionSpec = {
-                        fadeIn(tween(400)) togetherWith fadeOut(tween(300))
-                    },
-                    label = "resetContent"
-                ) { sent ->
-                    if (!sent) {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp),
-                            shape = RoundedCornerShape(20.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
-                        ) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = CardBackground),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                ) {
+                    AnimatedContent(
+                        targetState = isSent,
+                        transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(300)) },
+                        label = "resetAnimatedState"
+                    ) { sent ->
+                        if (!sent) {
                             Column(
-                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 28.dp)
+                                modifier = Modifier.padding(22.dp)
                             ) {
                                 Text(
-                                    text = "Enter your email",
-                                    fontSize = 16.sp,
+                                    text = "Reset Your Password",
+                                    fontSize = 17.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF1A1A1A)
+                                    color = TextPrimary
                                 )
-                                Spacer(modifier = Modifier.height(6.dp))
+                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "We'll send a password reset link to your registered email address.",
-                                    fontSize = 13.sp,
-                                    color = Color(0xFF9E9E9E),
-                                    lineHeight = 18.sp
+                                    text = "Enter your registered campus email address and we'll send you a password reset link.",
+                                    fontSize = 12.sp,
+                                    color = TextSecondary,
+                                    lineHeight = 17.sp
                                 )
 
-                                Spacer(modifier = Modifier.height(24.dp))
+                                Spacer(modifier = Modifier.height(20.dp))
 
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(56.dp)
-                                        .clip(RoundedCornerShape(14.dp))
-                                        .background(Color(0xFFF5F6FA))
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(horizontal = 16.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            Icons.Outlined.Email,
-                                            contentDescription = null,
-                                            tint = Color(0xFFBDBDBD),
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        BasicTextField(
-                                            value = email,
-                                            onValueChange = { newVal ->
-                                                email = newVal
-                                                errorMsg = ""
-                                            },
-                                            modifier = Modifier.weight(1f),
-                                            textStyle = androidx.compose.ui.text.TextStyle(
-                                                fontSize = 15.sp,
-                                                color = Color(0xFF1A1A1A)
-                                            ),
-                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                                            decorationBox = { innerTextField ->
-                                                if (email.isEmpty()) {
-                                                    Text(
-                                                        "student@messq.app",
-                                                        color = Color(0xFFBDBDBD),
-                                                        fontSize = 15.sp
-                                                    )
-                                                }
-                                                innerTextField()
-                                            },
-                                            singleLine = true
-                                        )
-                                    }
-                                }
+                                OutlinedTextField(
+                                    value = email,
+                                    onValueChange = {
+                                        email = it
+                                        errorMsg = ""
+                                    },
+                                    label = { Text("Registered Email Address") },
+                                    leadingIcon = {
+                                        Icon(Icons.Outlined.Email, contentDescription = null, tint = OrangePrimary)
+                                    },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                                    singleLine = true,
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedContainerColor = WarmWhite,
+                                        unfocusedContainerColor = WarmWhite,
+                                        focusedBorderColor = OrangePrimary,
+                                        unfocusedBorderColor = Divider
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
 
                                 if (errorMsg.isNotEmpty()) {
                                     Spacer(modifier = Modifier.height(10.dp))
                                     Text(
                                         text = errorMsg,
-                                        fontSize = 13.sp,
-                                        color = Color(0xFFE53935),
+                                        fontSize = 12.sp,
+                                        color = ErrorRed,
                                         fontWeight = FontWeight.Medium
                                     )
                                 }
 
-                                Spacer(modifier = Modifier.height(24.dp))
+                                Spacer(modifier = Modifier.height(22.dp))
 
                                 Button(
                                     onClick = {
@@ -236,18 +188,16 @@ fun ForgotPasswordScreen(onBack: () -> Unit) {
                                                 if (task.isSuccessful) {
                                                     isSent = true
                                                 } else {
-                                                    errorMsg = task.exception?.message
-                                                        ?: "Failed to send reset email"
+                                                    errorMsg = task.exception?.message ?: "Failed to send reset link"
                                                 }
                                             }
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(54.dp),
+                                        .height(52.dp),
                                     shape = RoundedCornerShape(14.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary),
-                                    enabled = !isLoading,
-                                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                                    enabled = !isLoading
                                 ) {
                                     if (isLoading) {
                                         CircularProgressIndicator(
@@ -257,8 +207,8 @@ fun ForgotPasswordScreen(onBack: () -> Unit) {
                                         )
                                     } else {
                                         Text(
-                                            text = "Send Reset Link",
-                                            fontSize = 16.sp,
+                                            text = "Send Recovery Email",
+                                            fontSize = 15.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White
                                         )
@@ -272,113 +222,83 @@ fun ForgotPasswordScreen(onBack: () -> Unit) {
                                     horizontalArrangement = Arrangement.Center
                                 ) {
                                     Text(
-                                        text = "Remember your password?  ",
-                                        fontSize = 14.sp,
-                                        color = Color(0xFF9E9E9E)
+                                        text = "Remember your password? ",
+                                        fontSize = 13.sp,
+                                        color = TextSecondary
                                     )
                                     Text(
                                         text = "Sign In",
-                                        fontSize = 14.sp,
+                                        fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = OrangePrimary,
-                                        modifier = Modifier.clickable { onBack() }
+                                        modifier = Modifier.clickable(onClick = onBack)
                                     )
                                 }
                             }
-                        }
-                    } else {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp),
-                            shape = RoundedCornerShape(20.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
-                        ) {
+                        } else {
                             Column(
-                                modifier = Modifier
-                                    .padding(horizontal = 24.dp, vertical = 36.dp),
+                                modifier = Modifier.padding(26.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(80.dp)
+                                        .size(68.dp)
                                         .clip(CircleShape)
-                                        .background(Color(0xFFE8F5E9)),
+                                        .background(SuccessGreen.copy(alpha = 0.15f)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         Icons.Outlined.MarkEmailRead,
                                         contentDescription = null,
-                                        tint = Color(0xFF4CAF50),
-                                        modifier = Modifier.size(40.dp)
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(20.dp))
-
-                                Text(
-                                    text = "Email Sent!",
-                                    fontSize = 22.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = Color(0xFF1A1A1A)
-                                )
-
-                                Spacer(modifier = Modifier.height(10.dp))
-
-                                Text(
-                                    text = "We've sent a password reset link to",
-                                    fontSize = 14.sp,
-                                    color = Color(0xFF9E9E9E),
-                                    textAlign = TextAlign.Center
-                                )
-                                Text(
-                                    text = email,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = OrangePrimary,
-                                    textAlign = TextAlign.Center
-                                )
-
-                                Spacer(modifier = Modifier.height(6.dp))
-
-                                Text(
-                                    text = "Check your inbox and follow the link to reset your password.",
-                                    fontSize = 13.sp,
-                                    color = Color(0xFF9E9E9E),
-                                    textAlign = TextAlign.Center,
-                                    lineHeight = 18.sp
-                                )
-
-                                Spacer(modifier = Modifier.height(28.dp))
-
-                                Button(
-                                    onClick = onBack,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(54.dp),
-                                    shape = RoundedCornerShape(14.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary),
-                                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-                                ) {
-                                    Text(
-                                        text = "Back to Sign In",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
+                                        tint = SuccessGreen,
+                                        modifier = Modifier.size(34.dp)
                                     )
                                 }
 
                                 Spacer(modifier = Modifier.height(16.dp))
 
                                 Text(
-                                    text = "Didn't receive it? Check spam or resend",
+                                    text = "Reset Link Dispatched",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Text(
+                                    text = "We have sent password instructions to",
+                                    fontSize = 12.sp,
+                                    color = TextSecondary
+                                )
+                                Text(
+                                    text = email,
                                     fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = OrangePrimary
+                                )
+
+                                Spacer(modifier = Modifier.height(24.dp))
+
+                                Button(
+                                    onClick = onBack,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(50.dp),
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
+                                ) {
+                                    Text("Back to Sign In", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                }
+
+                                Spacer(modifier = Modifier.height(14.dp))
+
+                                Text(
+                                    text = "Resend link",
+                                    fontSize = 12.sp,
                                     color = OrangePrimary,
-                                    fontWeight = FontWeight.Medium,
-                                    modifier = Modifier.clickable {
-                                        isSent = false
-                                    }
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.clickable { isSent = false }
                                 )
                             }
                         }
