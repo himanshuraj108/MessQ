@@ -317,11 +317,12 @@ fun LoginScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
-                                .clickable {
+                                .bouncyClick {
                                     email = "student@bitepass.app"
                                     password = "password123"
                                     name = "Himanshu Raj"
-                                    authViewModel.login("student@bitepass.app", "password123")
+                                    localError = ""
+                                    authViewModel.demoLogin()
                                 },
                             color = OrangeLight.copy(alpha = 0.5f),
                             border = BorderStroke(1.dp, OrangePrimary.copy(alpha = 0.3f))
