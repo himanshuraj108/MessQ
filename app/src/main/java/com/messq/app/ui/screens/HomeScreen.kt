@@ -50,6 +50,7 @@ fun HomeScreen(
     onNavigateToAssistant: () -> Unit,
     onNavigateToWallet: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onNavigateToStaff: () -> Unit = {},
     onLogout: () -> Unit,
     currentRoute: String,
     onNavigate: (String) -> Unit
@@ -180,6 +181,33 @@ fun HomeScreen(
                                     tint = Color.White,
                                     modifier = Modifier.size(18.dp)
                                 )
+                            }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = Color.White.copy(alpha = 0.25f),
+                                modifier = Modifier.bouncyClick(onClick = onNavigateToStaff)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Shield,
+                                        contentDescription = "Staff",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "Staff",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                }
                             }
                         }
                     }

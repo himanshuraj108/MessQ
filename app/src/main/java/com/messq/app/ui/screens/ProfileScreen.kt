@@ -38,6 +38,7 @@ fun ProfileScreen(
     authViewModel: AuthViewModel,
     onNavigateToOrderHistory: () -> Unit,
     onNavigateToForgotPassword: () -> Unit,
+    onNavigateToStaff: () -> Unit = {},
     onLogout: () -> Unit,
     onBack: () -> Unit,
     currentRoute: String,
@@ -217,6 +218,14 @@ fun ProfileScreen(
                             title = "Meal Receipts & Order History",
                             subtitle = "View digital tokens and past transactions",
                             onClick = onNavigateToOrderHistory
+                        )
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Divider)
+                        ProfileOptionRow(
+                            icon = Icons.Outlined.Shield,
+                            title = "Staff & Warden Command Center",
+                            subtitle = "Switch to Turnstile & Kitchen operations terminal",
+                            iconTint = OrangePrimary,
+                            onClick = onNavigateToStaff
                         )
                         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Divider)
                         ProfileOptionRow(

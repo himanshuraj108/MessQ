@@ -49,4 +49,20 @@ class HomeViewModel : ViewModel() {
             }
         }
     }
+
+    fun updateQueueCount(newCount: Int, waitTime: Int) {
+        val safeCount = newCount.coerceIn(0, _queueStatus.value.maxCapacity)
+        _queueStatus.value = _queueStatus.value.copy(
+            currentCount = safeCount,
+            waitTimeMinutes = waitTime
+        )
+        viewModelScope.launch {
+            try {
+                withTimeoutOrNull(2000L) {
+                    queueRepo.updateQueueStatus("main", safeCount, _queueStatus.value.maxCapacity, waitTime)
+                }
+            } catch (e: Exception) {
+            }
+        }
+    }
 }

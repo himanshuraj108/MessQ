@@ -36,6 +36,7 @@ import com.messq.app.viewmodel.AuthViewModel
 @Composable
 fun LoginScreen(
     onNavigateToHome: () -> Unit,
+    onNavigateToStaff: () -> Unit = {},
     onNavigateToForgotPassword: () -> Unit = {},
     authViewModel: AuthViewModel = viewModel()
 ) {
@@ -51,7 +52,11 @@ fun LoginScreen(
 
     LaunchedEffect(authState) {
         if (authState is AuthState.Success) {
-            onNavigateToHome()
+            if (selectedRoleIndex == 1) {
+                onNavigateToStaff()
+            } else {
+                onNavigateToHome()
+            }
         }
     }
 
@@ -319,6 +324,7 @@ fun LoginScreen(
                                 password = "password123"
                                 name = "Himanshu Raj"
                                 localError = ""
+                                selectedRoleIndex = 0
                                 authViewModel.demoLogin()
                             },
                             modifier = Modifier
@@ -336,10 +342,40 @@ fun LoginScreen(
                                 Icon(Icons.Outlined.FlashOn, contentDescription = null, tint = OrangePrimary, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "One-Tap Demo Login (Himanshu)",
+                                    text = "One-Tap Student Demo (Himanshu)",
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = OrangePrimary
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Surface(
+                            onClick = {
+                                selectedRoleIndex = 1
+                                onNavigateToStaff()
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp)),
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0xFFF1F5F9),
+                            border = BorderStroke(1.dp, Color(0xFFCBD5E1))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 14.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Outlined.Shield, contentDescription = null, tint = Color(0xFF334155), modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "One-Tap Warden & Staff Command Center",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF1E293B)
                                 )
                             }
                         }

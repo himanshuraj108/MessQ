@@ -57,4 +57,14 @@ class QueueRepository {
             "07:30 - 08:00 PM"
         )
     }
+
+    suspend fun updateQueueStatus(messId: String = "main", currentCount: Int, maxCapacity: Int, waitTimeMinutes: Int) {
+        try {
+            withTimeoutOrNull(2000L) {
+                db.collection("queue_status").document(messId).set(
+                    mapOf("currentCount" to currentCount, "maxCapacity" to maxCapacity, "waitTimeMinutes" to waitTimeMinutes)
+                ).await()
+            }
+        } catch (e: Exception) { }
+    }
 }

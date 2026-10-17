@@ -105,6 +105,11 @@ fun MessQApp() {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
+                onNavigateToStaff = {
+                    navController.navigate(Screen.StaffPanel.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                },
                 onNavigateToForgotPassword = {
                     navController.navigate(Screen.ForgotPassword.route)
                 },
@@ -123,6 +128,7 @@ fun MessQApp() {
                 onNavigateToAssistant = { navController.navigate(Screen.AIAssistant.route) },
                 onNavigateToWallet = { navController.navigate(Screen.Wallet.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                onNavigateToStaff = { navController.navigate(Screen.StaffPanel.route) },
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate(Screen.Login.route) {
@@ -240,6 +246,7 @@ fun MessQApp() {
                 authViewModel = authViewModel,
                 onNavigateToOrderHistory = { navController.navigate(Screen.OrderHistory.route) },
                 onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) },
+                onNavigateToStaff = { navController.navigate(Screen.StaffPanel.route) },
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate(Screen.Login.route) {
@@ -255,6 +262,23 @@ fun MessQApp() {
                             launchSingleTop = true
                             restoreState = true
                         }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.StaffPanel.route) {
+            StaffPanelScreen(
+                homeViewModel = homeViewModel,
+                onNavigateToStudentView = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.StaffPanel.route) { inclusive = true }
+                    }
+                },
+                onLogout = {
+                    authViewModel.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )
