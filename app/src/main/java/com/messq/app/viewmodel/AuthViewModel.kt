@@ -37,6 +37,11 @@ class AuthViewModel : ViewModel() {
         }
     }
 
+    fun staffLogin() {
+        _demoLoggedIn = true
+        _authState.value = AuthState.Success("Dr. K. Sharma")
+    }
+
     fun login(email: String, password: String) {
         if (email.isBlank() || password.isBlank()) {
             _authState.value = AuthState.Error("Please enter both email and password")
@@ -44,6 +49,13 @@ class AuthViewModel : ViewModel() {
         }
         val cleanEmail = email.trim()
         val cleanPass = password.trim()
+        if (cleanEmail.equals("warden@bitepass.app", ignoreCase = true) ||
+            cleanEmail.equals("staff@bitepass.app", ignoreCase = true) ||
+            cleanEmail.contains("warden", ignoreCase = true)
+        ) {
+            staffLogin()
+            return
+        }
         if (cleanEmail.equals("student@bitepass.app", ignoreCase = true) ||
             cleanEmail.contains("demo", ignoreCase = true) ||
             cleanEmail.contains("himanshu", ignoreCase = true) ||
