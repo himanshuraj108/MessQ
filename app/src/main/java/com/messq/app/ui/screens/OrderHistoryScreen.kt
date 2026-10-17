@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.messq.app.data.firebase.OrderData
+import com.messq.app.ui.components.*
 import com.messq.app.ui.theme.*
 import com.messq.app.viewmodel.OrderViewModel
 import java.text.SimpleDateFormat
@@ -110,7 +111,7 @@ fun OrderHistoryScreen(
                                 color = if (isSelected) OrangePrimary else CardBackground,
                                 border = if (isSelected) null else BorderStroke(1.dp, Divider),
                                 shadowElevation = if (isSelected) 2.dp else 0.dp,
-                                modifier = Modifier.clickable { selectedFilter = filter }
+                                modifier = Modifier.bouncyClick { selectedFilter = filter }
                             ) {
                                 Text(
                                     text = filter,
@@ -255,7 +256,7 @@ private fun OrderHistoryCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onShowReceipt),
+            .bouncyClick(onClick = onShowReceipt),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = CardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -352,7 +353,7 @@ private fun OrderHistoryCard(
                             shape = RoundedCornerShape(10.dp),
                             color = OrangeLight,
                             border = BorderStroke(1.dp, OrangePrimary.copy(alpha = 0.4f)),
-                            modifier = Modifier.clickable(onClick = onShowReceipt)
+                            modifier = Modifier.bouncyClick(onClick = onShowReceipt)
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),

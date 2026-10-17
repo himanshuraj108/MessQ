@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.messq.app.data.MessQData
 import com.messq.app.navigation.CartState
-import com.messq.app.ui.components.MessQBottomNav
+import com.messq.app.ui.components.*
 import com.messq.app.ui.theme.*
 import com.messq.app.viewmodel.AuthViewModel
 
@@ -397,7 +397,7 @@ private fun DigitalMessPassCard(
                 Surface(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
-                        .clickable(onClick = onQrClick),
+                        .bouncyClick(onClick = onQrClick),
                     color = OrangeLight,
                     border = BorderStroke(1.dp, OrangePrimary.copy(alpha = 0.3f))
                 ) {
@@ -531,7 +531,7 @@ private fun ProfileOptionRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .bouncyClick(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
