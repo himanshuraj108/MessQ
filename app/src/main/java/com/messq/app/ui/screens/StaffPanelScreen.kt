@@ -13,8 +13,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -32,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.messq.app.data.MenuItem
 import com.messq.app.data.MessQData
@@ -40,6 +43,41 @@ import com.messq.app.ui.components.bouncyClick
 import com.messq.app.ui.components.holographicSweep
 import com.messq.app.ui.theme.*
 import com.messq.app.viewmodel.HomeViewModel
+import kotlinx.coroutines.delay
+
+enum class GateRelayState {
+    LOCKED,
+    UNLOCKED,
+    EMERGENCY_RELEASE,
+    LOCKDOWN
+}
+
+enum class KitchenTicketStatus {
+    QUEUED,
+    COOKING,
+    READY,
+    BUMPED
+}
+
+data class KitchenTicket(
+    val ticketId: String,
+    val studentName: String,
+    val rollNo: String,
+    val orderSummary: String,
+    val slot: String,
+    var status: KitchenTicketStatus,
+    val elapsedMin: Int,
+    val isPriority: Boolean = false
+)
+
+data class RawMaterialSilo(
+    val name: String,
+    val currentQty: Float,
+    val maxQty: Float,
+    val unit: String,
+    val burnRate: String,
+    val isLow: Boolean
+)
 
 data class StaffScannedToken(
     val tokenId: String,
@@ -51,7 +89,8 @@ data class StaffScannedToken(
     val isPureVeg: Boolean,
     val itemsSummary: String,
     val scanTime: String,
-    var isServed: Boolean = false
+    var isServed: Boolean = false,
+    val isDuplicateAttempt: Boolean = false
 )
 
 data class StaffStudentEntry(
@@ -62,7 +101,9 @@ data class StaffStudentEntry(
     val mealPlan: String,
     val isPureVeg: Boolean,
     val lastMeal: String,
-    var isCheckedIn: Boolean
+    var isCheckedIn: Boolean,
+    val walletCredits: Int = 450,
+    val dietaryAllergy: String = "None"
 )
 
 @Composable
@@ -74,6 +115,24 @@ fun StaffPanelScreen(
     val queueStatus by homeViewModel.queueStatus.collectAsStateWithLifecycle()
 
     var selectedTab by remember { mutableIntStateOf(0) }
+    var selectedTerminal by remember { mutableStateOf("Gate Turnstile #01") }
+    var gateState by remember { mutableStateOf(GateRelayState.LOCKED) }
+    var gateUnlockCountdown by remember { mutableIntStateOf(0) }
+    var showAuditReportDialog by remember { mutableStateOf(false) }
+    var showEmergencyModal by remember { mutableStateOf(false) }
+    var bannerMessage by remember { mutableStateOf<String?>(null) }
+    var fraudAlertMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(gateUnlockCountdown) {
+        if (gateUnlockCountdown > 0) {
+            delay(1000L)
+            gateUnlockCountdown -= 1
+            if (gateUnlockCountdown == 0 && gateState == GateRelayState.UNLOCKED) {
+                gateState = GateRelayState.LOCKED
+            }
+        }
+    }
+
     var tokenInput by remember { mutableStateOf("") }
     var activeScannedRecord by remember {
         mutableStateOf<StaffScannedToken?>(
@@ -145,6 +204,27 @@ fun StaffPanelScreen(
         )
     }
 
+    val kitchenTickets = remember {
+        mutableStateListOf(
+            KitchenTicket("TK-1081", "Himanshu Raj", "12104892", "Paneer Butter Masala Thali x1, Cold Coffee x1", "12:30 - 01:00 PM", KitchenTicketStatus.COOKING, 3, isPriority = true),
+            KitchenTicket("TK-1082", "Vikram Patel", "12104239", "Chole Bhature Platter x1, Sweet Lassi x1", "12:30 - 01:00 PM", KitchenTicketStatus.QUEUED, 1),
+            KitchenTicket("TK-1083", "Aarav Sharma", "12104901", "Dal Makhani with Jeera Rice x1, Extra Roti x2", "12:30 - 01:00 PM", KitchenTicketStatus.READY, 6),
+            KitchenTicket("TK-1084", "Ananya Sen", "12105120", "Special Chicken Curry Meal x1", "12:30 - 01:00 PM", KitchenTicketStatus.COOKING, 5),
+            KitchenTicket("TK-1085", "Priya Nair", "12104677", "Rajma Chawal Bowl x1, Fresh Lime Juice x1", "12:30 - 01:00 PM", KitchenTicketStatus.QUEUED, 2),
+            KitchenTicket("TK-1079", "Rhea Kapoor", "12105561", "Palak Paneer Meal x1", "12:00 - 12:30 PM", KitchenTicketStatus.BUMPED, 12)
+        )
+    }
+
+    val rawMaterialSilos = remember {
+        listOf(
+            RawMaterialSilo("Basmati Rice (Silo A)", 180f, 250f, "kg", "14 kg/hr", isLow = false),
+            RawMaterialSilo("Wheat Flour / Atta", 95f, 150f, "kg", "12 kg/hr", isLow = false),
+            RawMaterialSilo("Fresh Dairy Milk", 40f, 120f, "L", "18 L/hr", isLow = true),
+            RawMaterialSilo("Refined Mustard Oil", 22f, 60f, "L", "4 L/hr", isLow = false),
+            RawMaterialSilo("Fresh Cottage Cheese (Paneer)", 14f, 40f, "kg", "6 kg/hr", isLow = true)
+        )
+    }
+
     val menuStockMap = remember {
         mutableStateMapOf<Int, Pair<Boolean, Int>>().apply {
             MessQData.allMenuItems.forEach { item ->
@@ -161,31 +241,29 @@ fun StaffPanelScreen(
 
     val studentRoster = remember {
         mutableStateListOf(
-            StaffStudentEntry("12104892", "Himanshu Raj", "Block A", "304", "Premium 3-Meal", false, "Lunch (Active)", true),
-            StaffStudentEntry("12104901", "Aarav Sharma", "Block B", "102", "Standard 2-Meal", true, "Lunch (Served)", true),
-            StaffStudentEntry("12105120", "Ananya Sen", "Block H", "208", "Premium 3-Meal", true, "Lunch (Served)", true),
-            StaffStudentEntry("12103844", "Priyanshu Verma", "Block C", "415", "Flexi Dining", false, "Lunch (Served)", true),
-            StaffStudentEntry("12104677", "Priya Nair", "Block H", "112", "Standard 2-Meal", true, "Breakfast (Served)", false),
-            StaffStudentEntry("12104239", "Vikram Patel", "Block A", "210", "Premium 3-Meal", false, "Yesterday Dinner", false),
-            StaffStudentEntry("12105561", "Rhea Kapoor", "Block D", "108", "Standard 2-Meal", true, "Breakfast (Served)", false),
-            StaffStudentEntry("12103390", "Kunal Mehra", "Block B", "401", "Premium 3-Meal", false, "Not Arrived", false)
+            StaffStudentEntry("12104892", "Himanshu Raj", "Block A", "304", "Premium 3-Meal", false, "Lunch (Active)", true, 540, "None"),
+            StaffStudentEntry("12104901", "Aarav Sharma", "Block B", "102", "Standard 2-Meal", true, "Lunch (Served)", true, 320, "Satvik"),
+            StaffStudentEntry("12105120", "Ananya Sen", "Block H", "208", "Premium 3-Meal", true, "Lunch (Served)", true, 890, "None"),
+            StaffStudentEntry("12103844", "Priyanshu Verma", "Block C", "415", "Flexi Dining", false, "Lunch (Served)", true, 180, "None"),
+            StaffStudentEntry("12104677", "Priya Nair", "Block H", "112", "Standard 2-Meal", true, "Breakfast (Served)", false, 410, "Peanut Allergy"),
+            StaffStudentEntry("12104239", "Vikram Patel", "Block A", "210", "Premium 3-Meal", false, "Yesterday Dinner", false, 650, "Gluten Sensitive"),
+            StaffStudentEntry("12105561", "Rhea Kapoor", "Block D", "108", "Standard 2-Meal", true, "Breakfast (Served)", false, 280, "None"),
+            StaffStudentEntry("12103390", "Kunal Mehra", "Block B", "401", "Premium 3-Meal", false, "Not Arrived", false, 75, "None")
         )
     }
-
-    var bannerMessage by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = CardBackground,
-                shadowElevation = 4.dp
+                color = Color(0xFF0F172A),
+                shadowElevation = 8.dp
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .statusBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .padding(horizontal = 16.dp, vertical = 10.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -211,40 +289,41 @@ fun StaffPanelScreen(
                             Column {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
-                                        text = "COMMAND CENTER",
-                                        fontSize = 11.sp,
+                                        text = "CAMPUS ERP OPERATIONS",
+                                        fontSize = 10.sp,
                                         fontWeight = FontWeight.Black,
                                         color = OrangePrimary,
-                                        letterSpacing = 1.sp
+                                        letterSpacing = 1.2.sp
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    PulsingRadarDot(color = Color(0xFF16A34A), dotSize = 8.dp)
+                                    PulsingRadarDot(color = Color(0xFF10B981), dotSize = 8.dp)
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = "LIVE",
-                                        fontSize = 10.sp,
+                                        text = "LIVE TELEMETRY",
+                                        fontSize = 9.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF16A34A)
+                                        color = Color(0xFF10B981)
                                     )
                                 }
                                 Text(
-                                    text = "Central Dining Complex • Station 01",
-                                    fontSize = 15.sp,
+                                    text = "Central Dining Complex • Dr. K. Sharma",
+                                    fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
+                                    color = Color.White
                                 )
                                 Text(
-                                    text = "Chief Warden: Dr. K. Sharma",
-                                    fontSize = 11.sp,
-                                    color = TextSecondary
+                                    text = "Edge Terminal Node 01 • Firmware v4.2.1 • Latency 14ms",
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF94A3B8)
                                 )
                             }
                         }
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
-                                shape = RoundedCornerShape(20.dp),
-                                color = OrangeLight,
+                                shape = RoundedCornerShape(16.dp),
+                                color = Color(0xFF1E293B),
+                                border = BorderStroke(1.dp, Color(0xFF334155)),
                                 modifier = Modifier.bouncyClick(onClick = onNavigateToStudentView)
                             ) {
                                 Row(
@@ -255,51 +334,143 @@ fun StaffPanelScreen(
                                         imageVector = Icons.Outlined.Person,
                                         contentDescription = null,
                                         tint = OrangePrimary,
-                                        modifier = Modifier.size(16.dp)
+                                        modifier = Modifier.size(14.dp)
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = "Student View",
-                                        fontSize = 12.sp,
+                                        text = "Student App",
+                                        fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = OrangePrimary
+                                        color = Color.White
                                     )
                                 }
                             }
 
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+
+                            IconButton(
+                                onClick = { showAuditReportDialog = true },
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF1E293B))
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Assessment,
+                                    contentDescription = "Audit Report",
+                                    tint = Color(0xFF38BDF8),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(6.dp))
 
                             IconButton(
                                 onClick = onLogout,
                                 modifier = Modifier
                                     .size(36.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFFF1F5F9))
+                                    .background(Color(0xFF1E293B))
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Outlined.Logout,
                                     contentDescription = "Logout",
-                                    tint = Color(0xFFDC2626),
+                                    tint = Color(0xFFEF4444),
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0xFF1E293B),
+                        border = BorderStroke(1.dp, Color(0xFF334155))
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Sensors,
+                                    contentDescription = null,
+                                    tint = Color(0xFF10B981),
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "HARDWARE RELAYS:",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF94A3B8)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "OPTICAL SONY IMX 60FPS",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF10B981)
+                                )
+                                Text(
+                                    text = " • 13.56MHz RFID NFC ARMED",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF38BDF8)
+                                )
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = when (gateState) {
+                                    GateRelayState.LOCKED -> Color(0xFF1E293B)
+                                    GateRelayState.UNLOCKED -> Color(0xFF065F46)
+                                    GateRelayState.EMERGENCY_RELEASE -> Color(0xFF92400E)
+                                    GateRelayState.LOCKDOWN -> Color(0xFF991B1B)
+                                },
+                                border = BorderStroke(1.dp, when (gateState) {
+                                    GateRelayState.LOCKED -> Color(0xFF64748B)
+                                    GateRelayState.UNLOCKED -> Color(0xFF10B981)
+                                    GateRelayState.EMERGENCY_RELEASE -> Color(0xFFF59E0B)
+                                    GateRelayState.LOCKDOWN -> Color(0xFFEF4444)
+                                })
+                            ) {
+                                Text(
+                                    text = when (gateState) {
+                                        GateRelayState.LOCKED -> "GATE 01: LOCKED [ARMED]"
+                                        GateRelayState.UNLOCKED -> "GATE 01: UNLOCKED (${gateUnlockCountdown}s)"
+                                        GateRelayState.EMERGENCY_RELEASE -> "EMERGENCY HOLD: OPEN"
+                                        GateRelayState.LOCKDOWN -> "SECURITY LOCKDOWN ACTIVE"
+                                    },
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFFF1F5F9))
+                            .background(Color(0xFF1E293B))
                             .padding(3.dp)
                     ) {
                         listOf(
-                            "Turnstile QR" to Icons.Outlined.QrCodeScanner,
-                            "Queue & Rush" to Icons.Outlined.Groups,
-                            "Kitchen Stock" to Icons.Outlined.RestaurantMenu,
-                            "Meal Roster" to Icons.Outlined.Badge
+                            "Turnstile Gate" to Icons.Outlined.QrCodeScanner,
+                            "Kitchen KDS" to Icons.Outlined.SoupKitchen,
+                            "Queue Rush" to Icons.Outlined.Groups,
+                            "Stock & Waste" to Icons.Outlined.Inventory2,
+                            "Audit Dossier" to Icons.Outlined.Badge
                         ).forEachIndexed { idx, tab ->
                             val isSelected = selectedTab == idx
                             Box(
@@ -311,19 +482,19 @@ fun StaffPanelScreen(
                                     .padding(vertical = 8.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Icon(
                                         imageVector = tab.second,
                                         contentDescription = null,
-                                        tint = if (isSelected) Color.White else TextSecondary,
-                                        modifier = Modifier.size(14.dp)
+                                        tint = if (isSelected) Color.White else Color(0xFF94A3B8),
+                                        modifier = Modifier.size(15.dp)
                                     )
-                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Spacer(modifier = Modifier.height(2.dp))
                                     Text(
                                         text = tab.first,
-                                        fontSize = 11.sp,
+                                        fontSize = 9.5.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (isSelected) Color.White else TextSecondary,
+                                        color = if (isSelected) Color.White else Color(0xFF94A3B8),
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -334,16 +505,41 @@ fun StaffPanelScreen(
                 }
             }
         },
-        containerColor = WarmWhite
+        containerColor = Color(0xFF0B132B)
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            fraudAlertMessage?.let { fraud ->
+                Surface(
+                    color = Color(0xFFEF4444),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Outlined.Warning, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(text = "SECURITY INTERCEPT: ANTI-PASSBACK FRAUD", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color.White)
+                                Text(text = fraud, fontSize = 11.sp, color = Color.White.copy(alpha = 0.9f))
+                            }
+                        }
+                        IconButton(onClick = { fraudAlertMessage = null }) {
+                            Icon(Icons.Filled.Close, contentDescription = "Dismiss", tint = Color.White, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                }
+            }
+
             bannerMessage?.let { msg ->
                 Surface(
-                    color = Color(0xFF16A34A),
+                    color = Color(0xFF10B981),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -354,11 +550,11 @@ fun StaffPanelScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = msg, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(text = msg, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                         Text(
                             text = "DISMISS",
-                            fontSize = 11.sp,
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.Black,
                             color = Color.White,
                             modifier = Modifier.clickable { bannerMessage = null }
@@ -373,55 +569,70 @@ fun StaffPanelScreen(
             ) {
                 item {
                     Spacer(modifier = Modifier.height(14.dp))
-                    StaffMetricsStrip(
+                    EnterpriseTelemetryStrip(
                         currentOccupancy = queueStatus.currentCount,
                         maxCapacity = queueStatus.maxCapacity,
                         servedCount = 1428,
                         totalExpected = 1800,
-                        todayRevenue = 48250,
-                        pendingOrders = 19
+                        todayRevenue = 95550,
+                        wasteKgSaved = 33.8f,
+                        activeKitchenTickets = kitchenTickets.count { it.status != KitchenTicketStatus.BUMPED }
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
                 }
 
                 when (selectedTab) {
                     0 -> {
                         item {
-                            StaffTurnstileTab(
+                            EnterpriseTurnstileTab(
+                                gateState = gateState,
+                                gateCountdown = gateUnlockCountdown,
                                 activeRecord = activeScannedRecord,
                                 tokenInput = tokenInput,
                                 onTokenInputChange = { tokenInput = it },
                                 onSearchToken = { query ->
-                                    val match = recentScans.find {
-                                        it.tokenId.contains(query, ignoreCase = true) ||
-                                                it.rollNo.contains(query, ignoreCase = true) ||
-                                                it.studentName.contains(query, ignoreCase = true)
-                                    }
-                                    if (match != null) {
-                                        activeScannedRecord = match
-                                        bannerMessage = "Found Pass: ${match.studentName} (${match.tokenId})"
+                                    if (query.contains("fraud", ignoreCase = true) || query.contains("duplicate", ignoreCase = true)) {
+                                        fraudAlertMessage = "Token $query already logged at Turnstile Gate #02 at 12:41 PM. Entry Rejected."
+                                        gateState = GateRelayState.LOCKED
                                     } else {
-                                        activeScannedRecord = StaffScannedToken(
-                                            tokenId = if (query.startsWith("BP-")) query else "BP-$query",
-                                            studentName = "Registered Student",
-                                            rollNo = query,
-                                            hostelRoom = "Hostel Complex",
-                                            mealType = "Lunch Access",
-                                            planName = "Semester Plan",
-                                            isPureVeg = false,
-                                            itemsSummary = "Standard Meal Entitlement",
-                                            scanTime = "Just Now",
-                                            isServed = false
-                                        )
-                                        bannerMessage = "Loaded Verified Token $query"
+                                        val match = recentScans.find {
+                                            it.tokenId.contains(query, ignoreCase = true) ||
+                                                    it.rollNo.contains(query, ignoreCase = true) ||
+                                                    it.studentName.contains(query, ignoreCase = true)
+                                        }
+                                        if (match != null) {
+                                            activeScannedRecord = match
+                                            bannerMessage = "Pass Authenticated: ${match.studentName} (${match.tokenId})"
+                                        } else {
+                                            activeScannedRecord = StaffScannedToken(
+                                                tokenId = if (query.startsWith("BP-")) query else "BP-$query",
+                                                studentName = "Registered Student",
+                                                rollNo = query,
+                                                hostelRoom = "Hostel Complex",
+                                                mealType = "Lunch Access",
+                                                planName = "Semester Plan",
+                                                isPureVeg = false,
+                                                itemsSummary = "Standard Meal Entitlement",
+                                                scanTime = "Just Now",
+                                                isServed = false
+                                            )
+                                            bannerMessage = "Token Verified from Cloud Ledger"
+                                        }
                                     }
                                 },
                                 onSelectPreset = { record ->
-                                    activeScannedRecord = record
-                                    tokenInput = record.tokenId
+                                    if (record.isDuplicateAttempt) {
+                                        fraudAlertMessage = "Anti-passback alert: ${record.studentName} attempted duplicate swipe within 6 minutes."
+                                        gateState = GateRelayState.LOCKED
+                                    } else {
+                                        activeScannedRecord = record
+                                        tokenInput = record.tokenId
+                                    }
                                 },
-                                onMarkServed = { record ->
+                                onCycleGateUnlock = { record ->
                                     record.isServed = true
+                                    gateState = GateRelayState.UNLOCKED
+                                    gateUnlockCountdown = 5
                                     val idx = recentScans.indexOfFirst { it.tokenId == record.tokenId }
                                     if (idx != -1) {
                                         recentScans[idx] = record.copy(isServed = true)
@@ -429,35 +640,57 @@ fun StaffPanelScreen(
                                         recentScans.add(0, record.copy(isServed = true))
                                     }
                                     activeScannedRecord = record.copy(isServed = true)
-                                    bannerMessage = "Turnstile #01 Unlocked: ${record.studentName} Marked Served"
+                                    bannerMessage = "Gate #01 Solenoid Latch Actuated: Turnstile Open (5s Window)"
                                 },
+                                onEmergencyOverride = { showEmergencyModal = true },
                                 recentScans = recentScans
                             )
                         }
                     }
                     1 -> {
                         item {
-                            StaffQueueControllerTab(
-                                queueStatus = queueStatus,
-                                onUpdateCount = { newCount, waitTime ->
-                                    homeViewModel.updateQueueCount(newCount, waitTime)
-                                    bannerMessage = "Queue Synced: $newCount Students in Dining Hall"
-                                },
-                                onBroadcastAlert = {
-                                    bannerMessage = "Push broadcast dispatched to 4,200 connected campus devices"
+                            KitchenDisplaySystemTab(
+                                tickets = kitchenTickets,
+                                onAdvanceStatus = { ticket ->
+                                    val nextStatus = when (ticket.status) {
+                                        KitchenTicketStatus.QUEUED -> KitchenTicketStatus.COOKING
+                                        KitchenTicketStatus.COOKING -> KitchenTicketStatus.READY
+                                        KitchenTicketStatus.READY -> KitchenTicketStatus.BUMPED
+                                        KitchenTicketStatus.BUMPED -> KitchenTicketStatus.BUMPED
+                                    }
+                                    val idx = kitchenTickets.indexOfFirst { it.ticketId == ticket.ticketId }
+                                    if (idx != -1) {
+                                        kitchenTickets[idx] = ticket.copy(status = nextStatus)
+                                        bannerMessage = "Ticket ${ticket.ticketId} updated to ${nextStatus.name}"
+                                    }
                                 }
                             )
                         }
                     }
                     2 -> {
                         item {
-                            StaffKitchenStockTab(
+                            StaffQueueControllerTab(
+                                queueStatus = queueStatus,
+                                onUpdateCount = { newCount, waitTime ->
+                                    homeViewModel.updateQueueCount(newCount, waitTime)
+                                    bannerMessage = "Queue Synced to 40k Students: $newCount in Central Mess"
+                                },
+                                onBroadcastAlert = {
+                                    bannerMessage = "Push broadcast dispatched: Delay lunch advised to avoid peak rush"
+                                }
+                            )
+                        }
+                    }
+                    3 -> {
+                        item {
+                            InventoryAndWastageTab(
+                                silos = rawMaterialSilos,
                                 menuStockMap = menuStockMap,
                                 onToggleAvailability = { id ->
                                     val current = menuStockMap[id] ?: Pair(true, 40)
                                     val updated = Pair(!current.first, if (!current.first) 40 else 0)
                                     menuStockMap[id] = updated
-                                    bannerMessage = if (updated.first) "Dish Marked IN STOCK (+40 portions)" else "Dish Marked SOLD OUT"
+                                    bannerMessage = if (updated.first) "Dish Marked IN STOCK (+40 portions)" else "Dish Marked 86-SOLD OUT"
                                 },
                                 onAdjustPortions = { id, delta ->
                                     val current = menuStockMap[id] ?: Pair(true, 40)
@@ -467,9 +700,9 @@ fun StaffPanelScreen(
                             )
                         }
                     }
-                    3 -> {
+                    4 -> {
                         item {
-                            StaffRosterTab(
+                            StudentDossierAuditTab(
                                 rosterList = studentRoster,
                                 onToggleCheckIn = { student ->
                                     val idx = studentRoster.indexOfFirst { it.rollNo == student.rollNo }
@@ -477,9 +710,9 @@ fun StaffPanelScreen(
                                         val newState = !student.isCheckedIn
                                         studentRoster[idx] = student.copy(
                                             isCheckedIn = newState,
-                                            lastMeal = if (newState) "Lunch (Manual Check-in)" else "Pending Arrival"
+                                            lastMeal = if (newState) "Lunch (Turnstile Override)" else "Pending Arrival"
                                         )
-                                        bannerMessage = if (newState) "${student.name} Checked In Manually" else "${student.name} Check-In Reverted"
+                                        bannerMessage = if (newState) "${student.name} Check-In Authenticated" else "${student.name} Check-In Revoked"
                                     }
                                 }
                             )
@@ -489,39 +722,129 @@ fun StaffPanelScreen(
             }
         }
     }
+
+    if (showEmergencyModal) {
+        Dialog(onDismissRequest = { showEmergencyModal = false }) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                border = BorderStroke(2.dp, Color(0xFFEF4444))
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Security,
+                        contentDescription = null,
+                        tint = Color(0xFFEF4444),
+                        modifier = Modifier.size(46.dp)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "EMERGENCY TURNSTILE CONTROLS",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "Authorized Chief Warden overrides for mass egress or security incidents.",
+                        fontSize = 12.sp,
+                        color = Color(0xFF94A3B8),
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    Button(
+                        onClick = {
+                            gateState = GateRelayState.EMERGENCY_RELEASE
+                            gateUnlockCountdown = 0
+                            showEmergencyModal = false
+                            bannerMessage = "EMERGENCY: ALL TURNSTILES HELD UNLOCKED FOR EGRESS"
+                        },
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B))
+                    ) {
+                        Text("Open All Gates (Evacuation Release)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Button(
+                        onClick = {
+                            gateState = GateRelayState.LOCKDOWN
+                            gateUnlockCountdown = 0
+                            showEmergencyModal = false
+                            bannerMessage = "LOCKDOWN ACTIVE: ALL BARRIERS RIGIDLY LOCKED"
+                        },
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                    ) {
+                        Text("Lockdown All Gates (Security Freeze)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    OutlinedButton(
+                        onClick = {
+                            gateState = GateRelayState.LOCKED
+                            showEmergencyModal = false
+                            bannerMessage = "Restored Normal Armed State on Gate #01"
+                        },
+                        modifier = Modifier.fillMaxWidth().height(46.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, Color(0xFF64748B))
+                    ) {
+                        Text("Reset to Normal Armed Operation", fontSize = 12.sp, color = Color.White)
+                    }
+                }
+            }
+        }
+    }
+
+    if (showAuditReportDialog) {
+        AuditReportPreviewDialog(onDismiss = { showAuditReportDialog = false })
+    }
 }
 
 @Composable
-private fun StaffMetricsStrip(
+private fun EnterpriseTelemetryStrip(
     currentOccupancy: Int,
     maxCapacity: Int,
     servedCount: Int,
     totalExpected: Int,
     todayRevenue: Int,
-    pendingOrders: Int
+    wasteKgSaved: Float,
+    activeKitchenTickets: Int
 ) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            MetricCard(
+            EnterpriseKpiTile(
                 modifier = Modifier.weight(1f),
-                title = "Meals Served",
-                value = "$servedCount",
-                subtext = "of $totalExpected expected (79%)",
-                icon = Icons.Outlined.CheckCircle,
-                accentColor = Color(0xFF16A34A),
-                bgColor = Color(0xFFECFDF5)
+                title = "MEALS SERVED",
+                metric = "$servedCount",
+                subtext = "Target $totalExpected (79.3%)",
+                badge = "+12% vs yday",
+                badgeColor = Color(0xFF10B981),
+                accentColor = Color(0xFF10B981)
             )
-            MetricCard(
+            EnterpriseKpiTile(
                 modifier = Modifier.weight(1f),
-                title = "Hall Occupancy",
-                value = "$currentOccupancy",
-                subtext = "Capacity $maxCapacity (${(currentOccupancy * 100 / maxCapacity.coerceAtLeast(1))}%)",
-                icon = Icons.Outlined.Groups,
-                accentColor = OrangePrimary,
-                bgColor = OrangeLight
+                title = "HALL DENSITY",
+                metric = "$currentOccupancy",
+                subtext = "Cap $maxCapacity (${(currentOccupancy * 100 / maxCapacity.coerceAtLeast(1))}%)",
+                badge = if (currentOccupancy > 150) "HEAVY RUSH" else "OPTIMAL",
+                badgeColor = if (currentOccupancy > 150) Color(0xFFEF4444) else OrangePrimary,
+                accentColor = OrangePrimary
             )
         }
 
@@ -531,43 +854,44 @@ private fun StaffMetricsStrip(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            MetricCard(
+            EnterpriseKpiTile(
                 modifier = Modifier.weight(1f),
-                title = "Digital Collections",
-                value = "Rs. $todayRevenue",
-                subtext = "Wallet, UPI, Pre-Orders",
-                icon = Icons.Outlined.AccountBalanceWallet,
-                accentColor = Color(0xFF2563EB),
-                bgColor = Color(0xFFEFF6FF)
+                title = "TODAY'S COLLECTIONS",
+                metric = "Rs. $todayRevenue",
+                subtext = "Prepaid + Spot UPI",
+                badge = "100% RECONCILED",
+                badgeColor = Color(0xFF38BDF8),
+                accentColor = Color(0xFF38BDF8)
             )
-            MetricCard(
+            EnterpriseKpiTile(
                 modifier = Modifier.weight(1f),
-                title = "Pending Pre-Orders",
-                value = "$pendingOrders",
-                subtext = "Lunch slot ready for counter",
-                icon = Icons.Outlined.Fastfood,
-                accentColor = Color(0xFF9333EA),
-                bgColor = Color(0xFFFAF5FF)
+                title = "WASTAGE PREVENTED",
+                metric = "$wasteKgSaved kg",
+                subtext = "Rs. 14,850 cost saved",
+                badge = "70.4% REDUCTION",
+                badgeColor = Color(0xFF10B981),
+                accentColor = Color(0xFF10B981)
             )
         }
     }
 }
 
 @Composable
-private fun MetricCard(
+private fun EnterpriseKpiTile(
     modifier: Modifier = Modifier,
     title: String,
-    value: String,
+    metric: String,
     subtext: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    accentColor: Color,
-    bgColor: Color
+    badge: String,
+    badgeColor: Color,
+    accentColor: Color
 ) {
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        border = BorderStroke(1.dp, Color(0xFF334155))
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Row(
@@ -577,31 +901,39 @@ private fun MetricCard(
             ) {
                 Text(
                     text = title,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = TextSecondary
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color(0xFF94A3B8),
+                    letterSpacing = 1.sp
                 )
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .background(bgColor),
-                    contentAlignment = Alignment.Center
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = badgeColor.copy(alpha = 0.15f),
+                    border = BorderStroke(1.dp, badgeColor.copy(alpha = 0.4f))
                 ) {
-                    Icon(imageVector = icon, contentDescription = null, tint = accentColor, modifier = Modifier.size(16.dp))
+                    Text(
+                        text = badge,
+                        fontSize = 8.5.sp,
+                        fontWeight = FontWeight.Black,
+                        color = badgeColor,
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                    )
                 }
             }
+
             Spacer(modifier = Modifier.height(6.dp))
+
             Text(
-                text = value,
-                fontSize = 18.sp,
+                text = metric,
+                fontSize = 19.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = TextPrimary
+                color = Color.White
             )
+
             Text(
                 text = subtext,
-                fontSize = 10.sp,
-                color = TextSecondary,
+                fontSize = 11.sp,
+                color = Color(0xFF94A3B8),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -610,21 +942,25 @@ private fun MetricCard(
 }
 
 @Composable
-private fun StaffTurnstileTab(
+private fun EnterpriseTurnstileTab(
+    gateState: GateRelayState,
+    gateCountdown: Int,
     activeRecord: StaffScannedToken?,
     tokenInput: String,
     onTokenInputChange: (String) -> Unit,
     onSearchToken: (String) -> Unit,
     onSelectPreset: (StaffScannedToken) -> Unit,
-    onMarkServed: (StaffScannedToken) -> Unit,
+    onCycleGateUnlock: (StaffScannedToken) -> Unit,
+    onEmergencyOverride: () -> Unit,
     recentScans: List<StaffScannedToken>
 ) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+            border = BorderStroke(1.dp, Color(0xFF334155))
         ) {
             Column(
                 modifier = Modifier.padding(18.dp),
@@ -636,21 +972,24 @@ private fun StaffTurnstileTab(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        PulsingRadarDot(color = Color(0xFF22C55E), dotSize = 8.dp)
+                        PulsingRadarDot(
+                            color = if (gateState == GateRelayState.UNLOCKED) Color(0xFF10B981) else Color(0xFF38BDF8),
+                            dotSize = 8.dp
+                        )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "TURNSTILE OPTICAL VIEWFINDER",
+                            text = "TURNSTILE OPTICAL VIEWFINDER & RELAY",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF22C55E),
+                            color = Color.White,
                             letterSpacing = 1.sp
                         )
                     }
                     Text(
-                        text = "SENSOR ACTIVE",
+                        text = "GATE #01",
                         fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White.copy(alpha = 0.6f)
+                        fontWeight = FontWeight.Black,
+                        color = OrangePrimary
                     )
                 }
 
@@ -658,43 +997,83 @@ private fun StaffTurnstileTab(
 
                 Box(
                     modifier = Modifier
-                        .size(170.dp)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(Color(0xFF1E293B))
-                        .border(BorderStroke(2.dp, OrangePrimary), RoundedCornerShape(18.dp))
+                        .fillMaxWidth()
+                        .height(190.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFF0F172A))
+                        .border(
+                            BorderStroke(
+                                2.dp,
+                                when (gateState) {
+                                    GateRelayState.LOCKED -> OrangePrimary
+                                    GateRelayState.UNLOCKED -> Color(0xFF10B981)
+                                    GateRelayState.EMERGENCY_RELEASE -> Color(0xFFF59E0B)
+                                    GateRelayState.LOCKDOWN -> Color(0xFFEF4444)
+                                }
+                            ),
+                            RoundedCornerShape(16.dp)
+                        )
                         .holographicSweep(),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(
-                            imageVector = Icons.Outlined.QrCodeScanner,
+                            imageVector = when (gateState) {
+                                GateRelayState.LOCKED -> Icons.Outlined.Lock
+                                GateRelayState.UNLOCKED -> Icons.Outlined.LockOpen
+                                GateRelayState.EMERGENCY_RELEASE -> Icons.Outlined.WarningAmber
+                                GateRelayState.LOCKDOWN -> Icons.Outlined.Security
+                            },
                             contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(54.dp)
+                            tint = when (gateState) {
+                                GateRelayState.LOCKED -> Color.White
+                                GateRelayState.UNLOCKED -> Color(0xFF10B981)
+                                GateRelayState.EMERGENCY_RELEASE -> Color(0xFFF59E0B)
+                                GateRelayState.LOCKDOWN -> Color(0xFFEF4444)
+                            },
+                            modifier = Modifier.size(52.dp)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Scan Token / Tap NFC",
-                            fontSize = 11.sp,
+                            text = when (gateState) {
+                                GateRelayState.LOCKED -> "Ready: Scan Student Token QR or Tap RFID"
+                                GateRelayState.UNLOCKED -> "BARRIER UNLOCKED: PASS THROUGH (${gateCountdown}s)"
+                                GateRelayState.EMERGENCY_RELEASE -> "EMERGENCY HOLD: ROTATING ARMS FREED"
+                                GateRelayState.LOCKDOWN -> "ALL ARMS LOCKED RIGIDLY"
+                            },
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         Text(
-                            text = "Auto-Verifies in 50ms",
-                            fontSize = 9.sp,
-                            color = Color.White.copy(alpha = 0.7f)
+                            text = "Edge Latency 14ms • Anti-Passback Algorithm Active",
+                            fontSize = 10.sp,
+                            color = Color(0xFF94A3B8)
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                Text(
-                    text = "Quick-Test Instant Verification Scans:",
-                    fontSize = 11.sp,
-                    color = Color.White.copy(alpha = 0.8f),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Instant Field Verification Swipes:",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF94A3B8)
+                    )
+                    Text(
+                        text = "Emergency Gate Controls",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFF59E0B),
+                        modifier = Modifier.clickable(onClick = onEmergencyOverride)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(6.dp))
 
@@ -702,10 +1081,11 @@ private fun StaffTurnstileTab(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(recentScans.take(3)) { scan ->
+                    items(recentScans) { scan ->
                         Surface(
                             shape = RoundedCornerShape(10.dp),
-                            color = Color(0xFF334155),
+                            color = Color(0xFF0F172A),
+                            border = BorderStroke(1.dp, Color(0xFF334155)),
                             modifier = Modifier.bouncyClick { onSelectPreset(scan) }
                         ) {
                             Row(
@@ -713,9 +1093,9 @@ private fun StaffTurnstileTab(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = Icons.Outlined.CheckCircle,
+                                    imageVector = if (scan.isServed) Icons.Outlined.CheckCircle else Icons.Outlined.QrCode,
                                     contentDescription = null,
-                                    tint = OrangePrimary,
+                                    tint = if (scan.isServed) Color(0xFF10B981) else OrangePrimary,
                                     modifier = Modifier.size(14.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
@@ -729,9 +1109,42 @@ private fun StaffTurnstileTab(
                                     Text(
                                         text = scan.tokenId,
                                         fontSize = 9.sp,
-                                        color = Color.White.copy(alpha = 0.7f)
+                                        color = Color(0xFF94A3B8)
                                     )
                                 }
+                            }
+                        }
+                    }
+
+                    item {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = Color(0xFF450A0A),
+                            border = BorderStroke(1.dp, Color(0xFFEF4444)),
+                            modifier = Modifier.bouncyClick {
+                                onSelectPreset(
+                                    StaffScannedToken(
+                                        tokenId = "BP-PASS-DUP-9912",
+                                        studentName = "Kunal Mehra",
+                                        rollNo = "12103390",
+                                        hostelRoom = "Block B 401",
+                                        mealType = "Lunch",
+                                        planName = "Flexi Plan",
+                                        isPureVeg = false,
+                                        itemsSummary = "Attempted Duplicate",
+                                        scanTime = "12:46 PM",
+                                        isDuplicateAttempt = true
+                                    )
+                                )
+                            }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Outlined.Warning, contentDescription = null, tint = Color(0xFFEF4444), modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Test Duplicate Fraud", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White)
                             }
                         }
                     }
@@ -746,14 +1159,16 @@ private fun StaffTurnstileTab(
                     OutlinedTextField(
                         value = tokenInput,
                         onValueChange = onTokenInputChange,
-                        placeholder = { Text("Enter Token / Roll #", fontSize = 12.sp, color = Color.White.copy(alpha = 0.5f)) },
+                        placeholder = { Text("Search Token ID or Roll #", fontSize = 12.sp, color = Color(0xFF64748B)) },
                         modifier = Modifier
                             .weight(1f)
                             .height(48.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = OrangePrimary,
-                            unfocusedBorderColor = Color(0xFF475569),
+                            unfocusedBorderColor = Color(0xFF334155),
+                            focusedContainerColor = Color(0xFF0F172A),
+                            unfocusedContainerColor = Color(0xFF0F172A),
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White,
                             cursorColor = OrangePrimary
@@ -775,15 +1190,15 @@ private fun StaffTurnstileTab(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         activeRecord?.let { record ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = CardBackground),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                border = BorderStroke(1.5.dp, if (record.isServed) Color(0xFF94A3B8) else Color(0xFF16A34A))
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                border = BorderStroke(1.5.dp, if (record.isServed) Color(0xFF64748B) else Color(0xFF10B981))
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Row(
@@ -796,13 +1211,13 @@ private fun StaffTurnstileTab(
                                 modifier = Modifier
                                     .size(46.dp)
                                     .clip(CircleShape)
-                                    .background(if (record.isServed) Color(0xFFF1F5F9) else Color(0xFFECFDF5)),
+                                    .background(if (record.isServed) Color(0xFF334155) else Color(0xFF065F46)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = if (record.isServed) Icons.Outlined.Check else Icons.Outlined.CheckCircle,
                                     contentDescription = null,
-                                    tint = if (record.isServed) Color(0xFF64748B) else Color(0xFF16A34A),
+                                    tint = if (record.isServed) Color(0xFF94A3B8) else Color(0xFF10B981),
                                     modifier = Modifier.size(26.dp)
                                 )
                             }
@@ -812,32 +1227,32 @@ private fun StaffTurnstileTab(
                                     text = record.studentName,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
+                                    color = Color.White
                                 )
                                 Text(
                                     text = "Roll: ${record.rollNo} • ${record.hostelRoom}",
                                     fontSize = 12.sp,
-                                    color = TextSecondary
+                                    color = Color(0xFF94A3B8)
                                 )
                             }
                         }
 
                         Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = if (record.isServed) Color(0xFFF1F5F9) else Color(0xFFDCFCE7)
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (record.isServed) Color(0xFF334155) else Color(0xFF065F46)
                         ) {
                             Text(
                                 text = if (record.isServed) "SERVED" else "VALIDATED",
-                                fontSize = 11.sp,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Black,
-                                color = if (record.isServed) Color(0xFF64748B) else Color(0xFF16A34A),
+                                color = if (record.isServed) Color(0xFF94A3B8) else Color(0xFF10B981),
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
-                    HorizontalDivider(color = Color(0xFFF1F5F9))
+                    HorizontalDivider(color = Color(0xFF334155))
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Row(
@@ -845,11 +1260,11 @@ private fun StaffTurnstileTab(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
-                            Text(text = "MEAL PLAN", fontSize = 10.sp, color = TextSecondary, fontWeight = FontWeight.Bold)
-                            Text(text = record.planName, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                            Text(text = "MEAL SUBSCRIPTION", fontSize = 10.sp, color = Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                            Text(text = record.planName, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text(text = "SLOT WINDOW", fontSize = 10.sp, color = TextSecondary, fontWeight = FontWeight.Bold)
+                            Text(text = "SLOT TIMING", fontSize = 10.sp, color = Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
                             Text(text = record.mealType, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = OrangePrimary)
                         }
                     }
@@ -858,22 +1273,23 @@ private fun StaffTurnstileTab(
 
                     Surface(
                         shape = RoundedCornerShape(10.dp),
-                        color = Color(0xFFF8FAFC),
+                        color = Color(0xFF0F172A),
+                        border = BorderStroke(1.dp, Color(0xFF334155)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(10.dp)) {
                             Text(
                                 text = "ORDER ENTITLEMENT / PRE-ORDER ITEMS:",
-                                fontSize = 10.sp,
+                                fontSize = 9.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = TextSecondary
+                                color = Color(0xFF94A3B8)
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = record.itemsSummary,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
+                                color = Color.White
                             )
                         }
                     }
@@ -881,14 +1297,14 @@ private fun StaffTurnstileTab(
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Button(
-                        onClick = { onMarkServed(record) },
+                        onClick = { onCycleGateUnlock(record) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp)
-                            .bouncyClick { onMarkServed(record) },
+                            .height(52.dp)
+                            .bouncyClick { onCycleGateUnlock(record) },
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (record.isServed) Color(0xFF64748B) else Color(0xFF16A34A)
+                            containerColor = if (record.isServed) Color(0xFF475569) else Color(0xFF10B981)
                         ),
                         enabled = !record.isServed
                     ) {
@@ -897,12 +1313,12 @@ private fun StaffTurnstileTab(
                                 imageVector = if (record.isServed) Icons.Filled.Check else Icons.Outlined.LockOpen,
                                 contentDescription = null,
                                 tint = Color.White,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = if (record.isServed) "Meal Delivered • Gate Opened" else "Mark as Served & Open Turnstile",
-                                fontSize = 14.sp,
+                                text = if (record.isServed) "Meal Delivered • Turnstile Cycle Complete" else "Actuate Turnstile Solenoid & Mark Served",
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
                             )
@@ -915,15 +1331,15 @@ private fun StaffTurnstileTab(
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = "Today's Verified Scan Ledger",
+            text = "Hardware Verification Ledger",
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
-            color = TextPrimary
+            color = Color.White
         )
         Text(
-            text = "Real-time audit log of students granted turnstile entry",
-            fontSize = 12.sp,
-            color = TextSecondary
+            text = "High-speed encrypted audit trail across turnstile gates",
+            fontSize = 11.sp,
+            color = Color(0xFF94A3B8)
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -934,8 +1350,8 @@ private fun StaffTurnstileTab(
                     .fillMaxWidth()
                     .padding(vertical = 4.dp),
                 shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = CardBackground),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                border = BorderStroke(1.dp, Color(0xFF334155))
             ) {
                 Row(
                     modifier = Modifier
@@ -949,14 +1365,14 @@ private fun StaffTurnstileTab(
                             modifier = Modifier
                                 .size(34.dp)
                                 .clip(CircleShape)
-                                .background(if (item.isServed) Color(0xFFDCFCE7) else OrangeLight),
+                                .background(if (item.isServed) Color(0xFF065F46) else Color(0xFF7C2D12)),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = item.studentName.take(1),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (item.isServed) Color(0xFF16A34A) else OrangePrimary
+                                color = if (item.isServed) Color(0xFF10B981) else OrangePrimary
                             )
                         }
                         Spacer(modifier = Modifier.width(10.dp))
@@ -965,12 +1381,12 @@ private fun StaffTurnstileTab(
                                 text = item.studentName,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = Color.White
                             )
                             Text(
                                 text = "${item.rollNo} • ${item.itemsSummary}",
                                 fontSize = 11.sp,
-                                color = TextSecondary,
+                                color = Color(0xFF94A3B8),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -982,18 +1398,234 @@ private fun StaffTurnstileTab(
                             text = item.scanTime,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = Color.White
                         )
                         Surface(
                             shape = RoundedCornerShape(6.dp),
-                            color = if (item.isServed) Color(0xFFDCFCE7) else OrangeLight
+                            color = if (item.isServed) Color(0xFF065F46) else Color(0xFF7C2D12)
                         ) {
                             Text(
-                                text = if (item.isServed) "SERVED" else "WAITING",
+                                text = if (item.isServed) "SERVED" else "PENDING",
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (item.isServed) Color(0xFF16A34A) else OrangePrimary,
+                                color = if (item.isServed) Color(0xFF10B981) else OrangePrimary,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun KitchenDisplaySystemTab(
+    tickets: List<KitchenTicket>,
+    onAdvanceStatus: (KitchenTicket) -> Unit
+) {
+    var selectedFilter by remember { mutableStateOf("ACTIVE") }
+
+    val filteredTickets = remember(selectedFilter, tickets) {
+        when (selectedFilter) {
+            "QUEUED" -> tickets.filter { it.status == KitchenTicketStatus.QUEUED }
+            "COOKING" -> tickets.filter { it.status == KitchenTicketStatus.COOKING }
+            "READY" -> tickets.filter { it.status == KitchenTicketStatus.READY }
+            else -> tickets.filter { it.status != KitchenTicketStatus.BUMPED }
+        }
+    }
+
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Live Kitchen Display System (KDS)",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Text(
+                    text = "High-velocity live line production tickets for chef & assembly staff",
+                    fontSize = 11.sp,
+                    color = Color(0xFF94A3B8)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+            border = BorderStroke(1.dp, Color(0xFF334155))
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("ACTIVE TICKETS", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color(0xFF94A3B8))
+                    Text("${tickets.count { it.status != KitchenTicketStatus.BUMPED }}", fontSize = 18.sp, fontWeight = FontWeight.Black, color = Color.White)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("COOKING NOW", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = OrangePrimary)
+                    Text("${tickets.count { it.status == KitchenTicketStatus.COOKING }}", fontSize = 18.sp, fontWeight = FontWeight.Black, color = OrangePrimary)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("READY TO BUMP", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
+                    Text("${tickets.count { it.status == KitchenTicketStatus.READY }}", fontSize = 18.sp, fontWeight = FontWeight.Black, color = Color(0xFF10B981))
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("AVG SLA SPEED", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color(0xFF38BDF8))
+                    Text("3m 42s", fontSize = 18.sp, fontWeight = FontWeight.Black, color = Color(0xFF38BDF8))
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            listOf("ACTIVE", "QUEUED", "COOKING", "READY").forEach { filter ->
+                val isSelected = selectedFilter == filter
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (isSelected) OrangePrimary else Color(0xFF1E293B),
+                    border = BorderStroke(1.dp, if (isSelected) OrangePrimary else Color(0xFF334155)),
+                    modifier = Modifier
+                        .weight(1f)
+                        .bouncyClick { selectedFilter = filter }
+                ) {
+                    Text(
+                        text = filter,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isSelected) Color.White else Color(0xFF94A3B8),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        filteredTickets.forEach { ticket ->
+            val statusColor = when (ticket.status) {
+                KitchenTicketStatus.QUEUED -> Color(0xFF38BDF8)
+                KitchenTicketStatus.COOKING -> OrangePrimary
+                KitchenTicketStatus.READY -> Color(0xFF10B981)
+                KitchenTicketStatus.BUMPED -> Color(0xFF64748B)
+            }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                border = BorderStroke(1.5.dp, statusColor)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = statusColor.copy(alpha = 0.2f),
+                                border = BorderStroke(1.dp, statusColor)
+                            ) {
+                                Text(
+                                    text = ticket.ticketId,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = statusColor,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = ticket.studentName,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = if (ticket.elapsedMin > 5) Color(0xFFEF4444).copy(alpha = 0.2f) else Color(0xFF0F172A),
+                            border = BorderStroke(1.dp, if (ticket.elapsedMin > 5) Color(0xFFEF4444) else Color(0xFF334155))
+                        ) {
+                            Text(
+                                text = "Elapsed: ${ticket.elapsedMin}m",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (ticket.elapsedMin > 5) Color(0xFFEF4444) else Color(0xFF94A3B8),
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xFF0F172A),
+                        border = BorderStroke(1.dp, Color(0xFF334155)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = ticket.orderSummary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White,
+                            modifier = Modifier.padding(10.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Slot: ${ticket.slot}",
+                            fontSize = 11.sp,
+                            color = Color(0xFF94A3B8)
+                        )
+
+                        Button(
+                            onClick = { onAdvanceStatus(ticket) },
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = statusColor),
+                            modifier = Modifier.bouncyClick { onAdvanceStatus(ticket) }
+                        ) {
+                            Text(
+                                text = when (ticket.status) {
+                                    KitchenTicketStatus.QUEUED -> "Start Cooking"
+                                    KitchenTicketStatus.COOKING -> "Mark Ready"
+                                    KitchenTicketStatus.READY -> "Bump / Dispatched"
+                                    KitchenTicketStatus.BUMPED -> "Completed"
+                                },
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
                             )
                         }
                     }
@@ -1020,32 +1652,33 @@ private fun StaffQueueControllerTab(
     }
 
     val rushColor = when {
-        occupancyFraction < 0.45f -> Color(0xFF16A34A)
-        occupancyFraction < 0.75f -> Color(0xFFEAB308)
-        else -> Color(0xFFDC2626)
+        occupancyFraction < 0.45f -> Color(0xFF10B981)
+        occupancyFraction < 0.75f -> Color(0xFFF59E0B)
+        else -> Color(0xFFEF4444)
     }
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(22.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+            border = BorderStroke(1.dp, Color(0xFF334155))
         ) {
             Column(
                 modifier = Modifier.padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Central Dining Hall Live Rush Level",
+                    text = "Central Dining Hall Live Headcount Control",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = Color.White
                 )
                 Text(
-                    text = "Controls live headcount and estimated wait times for all 40,000 students",
-                    fontSize = 12.sp,
-                    color = TextSecondary,
+                    text = "Pushes real-time Firestore queue broadcasts to all 40,000 campus app instances",
+                    fontSize = 11.sp,
+                    color = Color(0xFF94A3B8),
                     textAlign = TextAlign.Center
                 )
 
@@ -1053,7 +1686,7 @@ private fun StaffQueueControllerTab(
 
                 Box(
                     modifier = Modifier
-                        .size(140.dp)
+                        .size(150.dp)
                         .clip(CircleShape)
                         .background(rushColor.copy(alpha = 0.12f))
                         .border(BorderStroke(4.dp, rushColor), CircleShape),
@@ -1062,15 +1695,15 @@ private fun StaffQueueControllerTab(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = "$customOccupancy",
-                            fontSize = 36.sp,
+                            fontSize = 38.sp,
                             fontWeight = FontWeight.Black,
                             color = rushColor
                         )
                         Text(
-                            text = "of $maxCap max",
+                            text = "of $maxCap capacity",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = TextSecondary
+                            color = Color(0xFF94A3B8)
                         )
                         Text(
                             text = currentRushLevel,
@@ -1084,10 +1717,10 @@ private fun StaffQueueControllerTab(
                 Spacer(modifier = Modifier.height(18.dp))
 
                 Text(
-                    text = "Instant Stepper Adjustments",
-                    fontSize = 12.sp,
+                    text = "Instant Turnstile Headcount Stepper",
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextSecondary
+                    color = Color(0xFF94A3B8)
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -1112,15 +1745,15 @@ private fun StaffQueueControllerTab(
                                     onUpdateCount(next, calculatedWait)
                                 },
                             shape = RoundedCornerShape(10.dp),
-                            color = if (delta > 0) OrangeLight else Color(0xFFF1F5F9),
-                            border = BorderStroke(1.dp, if (delta > 0) OrangePrimary.copy(alpha = 0.4f) else Color(0xFFCBD5E1))
+                            color = if (delta > 0) OrangePrimary.copy(alpha = 0.15f) else Color(0xFF0F172A),
+                            border = BorderStroke(1.dp, if (delta > 0) OrangePrimary else Color(0xFF334155))
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Text(
                                     text = if (delta > 0) "+$delta" else "$delta",
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (delta > 0) OrangePrimary else Color(0xFF475569)
+                                    color = if (delta > 0) OrangePrimary else Color(0xFF94A3B8)
                                 )
                             }
                         }
@@ -1130,10 +1763,10 @@ private fun StaffQueueControllerTab(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Preset Rush Profiles (One-Tap Override)",
-                    fontSize = 12.sp,
+                    text = "Preset Campus Rush Profiles (One-Tap Override)",
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextSecondary
+                    color = Color(0xFF94A3B8)
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -1143,9 +1776,9 @@ private fun StaffQueueControllerTab(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     listOf(
-                        Triple("LOW", 45, Color(0xFF16A34A)),
-                        Triple("MODERATE", 134, Color(0xFFEAB308)),
-                        Triple("PEAK", 188, Color(0xFFDC2626))
+                        Triple("LOW RUSH", 45, Color(0xFF10B981)),
+                        Triple("MODERATE", 134, Color(0xFFF59E0B)),
+                        Triple("PEAK RUSH", 188, Color(0xFFEF4444))
                     ).forEach { preset ->
                         Surface(
                             modifier = Modifier
@@ -1153,14 +1786,14 @@ private fun StaffQueueControllerTab(
                                 .bouncyClick {
                                     customOccupancy = preset.second
                                     val wait = when (preset.first) {
-                                        "LOW" -> 4
+                                        "LOW RUSH" -> 4
                                         "MODERATE" -> 10
                                         else -> 22
                                     }
                                     onUpdateCount(preset.second, wait)
                                 },
                             shape = RoundedCornerShape(12.dp),
-                            color = preset.third.copy(alpha = 0.1f),
+                            color = preset.third.copy(alpha = 0.12f),
                             border = BorderStroke(1.5.dp, preset.third)
                         ) {
                             Column(
@@ -1169,14 +1802,14 @@ private fun StaffQueueControllerTab(
                             ) {
                                 Text(
                                     text = preset.first,
-                                    fontSize = 12.sp,
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.Black,
                                     color = preset.third
                                 )
                                 Text(
                                     text = "${preset.second} students",
                                     fontSize = 10.sp,
-                                    color = TextSecondary
+                                    color = Color(0xFF94A3B8)
                                 )
                             }
                         }
@@ -1190,29 +1823,21 @@ private fun StaffQueueControllerTab(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(18.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+            border = BorderStroke(1.dp, Color(0xFF334155))
         ) {
             Column(modifier = Modifier.padding(18.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Broadcast Peak Crowd Alert",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = "Sends notification to advise students to delay lunch by 15 mins",
-                            fontSize = 11.sp,
-                            color = TextSecondary
-                        )
-                    }
-                }
+                Text(
+                    text = "Campus Rush Broadcast Notification Engine",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Text(
+                    text = "Dispatches push alert advising students to delay visit by 15 mins",
+                    fontSize = 11.sp,
+                    color = Color(0xFF94A3B8)
+                )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -1220,14 +1845,14 @@ private fun StaffQueueControllerTab(
                     onClick = onBroadcastAlert,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(46.dp)
+                        .height(48.dp)
                         .bouncyClick(onClick = onBroadcastAlert),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
                 ) {
                     Icon(imageVector = Icons.Outlined.NotificationsActive, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "Announce Peak Rush Notification", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(text = "Broadcast Peak Rush Notification", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -1235,7 +1860,8 @@ private fun StaffQueueControllerTab(
 }
 
 @Composable
-private fun StaffKitchenStockTab(
+private fun InventoryAndWastageTab(
+    silos: List<RawMaterialSilo>,
     menuStockMap: MutableMap<Int, Pair<Boolean, Int>>,
     onToggleAvailability: (Int) -> Unit,
     onAdjustPortions: (Int, Int) -> Unit
@@ -1252,27 +1878,91 @@ private fun StaffKitchenStockTab(
     }
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "Live Kitchen Stock & Menu Availability",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
-                )
-                Text(
-                    text = "Toggle Sold-Out status to prevent student over-ordering",
-                    fontSize = 12.sp,
-                    color = TextSecondary
-                )
+        Text(
+            text = "Raw Material Silos & Kitchen Telemetry",
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+        Text(
+            text = "Real-time stock burn rate and automated reorder alerts",
+            fontSize = 11.sp,
+            color = Color(0xFF94A3B8)
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        silos.forEach { silo ->
+            val fraction = (silo.currentQty / silo.maxQty).coerceIn(0f, 1f)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                border = BorderStroke(1.dp, if (silo.isLow) Color(0xFFF59E0B) else Color(0xFF334155))
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = silo.name, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = if (silo.isLow) Color(0xFFF59E0B).copy(alpha = 0.2f) else Color(0xFF10B981).copy(alpha = 0.2f)
+                        ) {
+                            Text(
+                                text = if (silo.isLow) "LOW STOCK" else "OPTIMAL",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Black,
+                                color = if (silo.isLow) Color(0xFFF59E0B) else Color(0xFF10B981),
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = "${silo.currentQty.toInt()} ${silo.unit} / ${silo.maxQty.toInt()} ${silo.unit} (${(fraction * 100).toInt()}%)", fontSize = 11.sp, color = Color.White)
+                        Text(text = "Burn: ${silo.burnRate}", fontSize = 10.sp, color = Color(0xFF94A3B8))
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    LinearProgressIndicator(
+                        progress = { fraction },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(3.dp)),
+                        color = if (silo.isLow) Color(0xFFF59E0B) else Color(0xFF10B981),
+                        trackColor = Color(0xFF0F172A)
+                    )
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(18.dp))
+
+        Text(
+            text = "Dynamic 86-List & Dish Availability",
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+        Text(
+            text = "Sold-out dishes update student menus instantly to eliminate refund disputes",
+            fontSize = 11.sp,
+            color = Color(0xFF94A3B8)
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
 
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
@@ -1281,23 +1971,23 @@ private fun StaffKitchenStockTab(
             items(categories) { cat ->
                 val isSelected = selectedCategory == cat
                 Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = if (isSelected) OrangePrimary else Color.White,
-                    border = BorderStroke(1.dp, if (isSelected) OrangePrimary else Color(0xFFE2E8F0)),
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (isSelected) OrangePrimary else Color(0xFF1E293B),
+                    border = BorderStroke(1.dp, if (isSelected) OrangePrimary else Color(0xFF334155)),
                     modifier = Modifier.bouncyClick { selectedCategory = cat }
                 ) {
                     Text(
                         text = cat,
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isSelected) Color.White else TextSecondary,
+                        color = if (isSelected) Color.White else Color(0xFF94A3B8),
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         filteredItems.forEach { item ->
             val stockInfo = menuStockMap[item.id] ?: Pair(true, 40)
@@ -1307,16 +1997,15 @@ private fun StaffKitchenStockTab(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 5.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = if (isInStock) CardBackground else Color(0xFFF8FAFC)),
-                elevation = CardDefaults.cardElevation(defaultElevation = if (isInStock) 2.dp else 0.dp),
-                border = BorderStroke(1.dp, if (isInStock) Color(0xFFF1F5F9) else Color(0xFFE2E8F0))
+                    .padding(vertical = 4.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = if (isInStock) Color(0xFF1E293B) else Color(0xFF161E2E)),
+                border = BorderStroke(1.dp, if (isInStock) Color(0xFF334155) else Color(0xFFEF4444).copy(alpha = 0.4f))
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(14.dp),
+                        .padding(12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -1324,16 +2013,16 @@ private fun StaffKitchenStockTab(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 modifier = Modifier
-                                    .size(10.dp)
+                                    .size(8.dp)
                                     .clip(CircleShape)
-                                    .background(if (item.isVeg) Color(0xFF16A34A) else Color(0xFFDC2626))
+                                    .background(if (item.isVeg) Color(0xFF10B981) else Color(0xFFEF4444))
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = item.name,
-                                fontSize = 14.sp,
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isInStock) TextPrimary else Color(0xFF94A3B8)
+                                color = if (isInStock) Color.White else Color(0xFF64748B)
                             )
                         }
 
@@ -1342,7 +2031,7 @@ private fun StaffKitchenStockTab(
                         Text(
                             text = "Rs. ${item.price} • ${item.category.name} • Prep: ${item.prepTimeMinutes}m",
                             fontSize = 11.sp,
-                            color = TextSecondary
+                            color = Color(0xFF94A3B8)
                         )
 
                         Spacer(modifier = Modifier.height(6.dp))
@@ -1350,13 +2039,13 @@ private fun StaffKitchenStockTab(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
                                 shape = RoundedCornerShape(6.dp),
-                                color = if (isInStock) Color(0xFFDCFCE7) else Color(0xFFFEE2E2)
+                                color = if (isInStock) Color(0xFF065F46) else Color(0xFF450A0A)
                             ) {
                                 Text(
-                                    text = if (isInStock) "$remainingPortions plates left" else "SOLD OUT",
-                                    fontSize = 10.sp,
+                                    text = if (isInStock) "$remainingPortions plates left" else "86-SOLD OUT",
+                                    fontSize = 9.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isInStock) Color(0xFF16A34A) else Color(0xFFDC2626),
+                                    color = if (isInStock) Color(0xFF10B981) else Color(0xFFEF4444),
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                 )
                             }
@@ -1364,7 +2053,7 @@ private fun StaffKitchenStockTab(
                             if (isInStock) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "+10 plates",
+                                    text = "+10",
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = OrangePrimary,
@@ -1374,10 +2063,10 @@ private fun StaffKitchenStockTab(
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "-10 plates",
+                                    text = "-10",
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF64748B),
+                                    color = Color(0xFF94A3B8),
                                     modifier = Modifier
                                         .bouncyClick { onAdjustPortions(item.id, -10) }
                                         .padding(horizontal = 4.dp, vertical = 2.dp)
@@ -1386,24 +2075,16 @@ private fun StaffKitchenStockTab(
                         }
                     }
 
-                    Column(horizontalAlignment = Alignment.End) {
-                        Switch(
-                            checked = isInStock,
-                            onCheckedChange = { onToggleAvailability(item.id) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = Color(0xFF16A34A),
-                                uncheckedThumbColor = Color(0xFF64748B),
-                                uncheckedTrackColor = Color(0xFFCBD5E1)
-                            )
+                    Switch(
+                        checked = isInStock,
+                        onCheckedChange = { onToggleAvailability(item.id) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFF10B981),
+                            uncheckedThumbColor = Color(0xFF94A3B8),
+                            uncheckedTrackColor = Color(0xFF334155)
                         )
-                        Text(
-                            text = if (isInStock) "In Stock" else "Sold Out",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isInStock) Color(0xFF16A34A) else Color(0xFFDC2626)
-                        )
-                    }
+                    )
                 }
             }
         }
@@ -1411,7 +2092,7 @@ private fun StaffKitchenStockTab(
 }
 
 @Composable
-private fun StaffRosterTab(
+private fun StudentDossierAuditTab(
     rosterList: List<StaffStudentEntry>,
     onToggleCheckIn: (StaffStudentEntry) -> Unit
 ) {
@@ -1430,25 +2111,17 @@ private fun StaffRosterTab(
     }
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "Student Dining Roster & Audit",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
-                )
-                Text(
-                    text = "Verify registered meal plans and mark manual check-ins",
-                    fontSize = 12.sp,
-                    color = TextSecondary
-                )
-            }
-        }
+        Text(
+            text = "Institutional Student Roster Dossier",
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+        Text(
+            text = "Cryptographic ledger of active campus subscriptions, dietary restrictions, and dues",
+            fontSize = 11.sp,
+            color = Color(0xFF94A3B8)
+        )
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -1459,16 +2132,19 @@ private fun StaffRosterTab(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = { Text("Search by name, roll no, or block...", fontSize = 12.sp, color = TextHint) },
+                placeholder = { Text("Search by name, roll no, or block...", fontSize = 12.sp, color = Color(0xFF64748B)) },
                 modifier = Modifier
                     .weight(1f)
                     .height(48.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = OrangePrimary,
-                    unfocusedBorderColor = Color(0xFFE2E8F0),
-                    focusedContainerColor = CardBackground,
-                    unfocusedContainerColor = CardBackground
+                    unfocusedBorderColor = Color(0xFF334155),
+                    focusedContainerColor = Color(0xFF1E293B),
+                    unfocusedContainerColor = Color(0xFF1E293B),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    cursorColor = OrangePrimary
                 ),
                 leadingIcon = {
                     Icon(Icons.Outlined.Search, contentDescription = null, tint = OrangePrimary, modifier = Modifier.size(18.dp))
@@ -1480,8 +2156,8 @@ private fun StaffRosterTab(
 
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = if (filterPureVeg) Color(0xFFDCFCE7) else Color(0xFFF1F5F9),
-                border = BorderStroke(1.dp, if (filterPureVeg) Color(0xFF16A34A) else Color.Transparent),
+                color = if (filterPureVeg) Color(0xFF065F46) else Color(0xFF1E293B),
+                border = BorderStroke(1.dp, if (filterPureVeg) Color(0xFF10B981) else Color(0xFF334155)),
                 modifier = Modifier
                     .height(48.dp)
                     .bouncyClick { filterPureVeg = !filterPureVeg }
@@ -1492,16 +2168,16 @@ private fun StaffRosterTab(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(10.dp)
+                            .size(8.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFF16A34A))
+                            .background(Color(0xFF10B981))
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "Pure Veg",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (filterPureVeg) Color(0xFF16A34A) else TextSecondary
+                        color = if (filterPureVeg) Color.White else Color(0xFF94A3B8)
                     )
                 }
             }
@@ -1515,8 +2191,8 @@ private fun StaffRosterTab(
                     .fillMaxWidth()
                     .padding(vertical = 4.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = CardBackground),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                border = BorderStroke(1.dp, Color(0xFF334155))
             ) {
                 Row(
                     modifier = Modifier
@@ -1530,14 +2206,14 @@ private fun StaffRosterTab(
                             modifier = Modifier
                                 .size(42.dp)
                                 .clip(CircleShape)
-                                .background(if (student.isCheckedIn) Color(0xFFDCFCE7) else OrangeLight),
+                                .background(if (student.isCheckedIn) Color(0xFF065F46) else Color(0xFF7C2D12)),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = student.name.take(1),
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Black,
-                                color = if (student.isCheckedIn) Color(0xFF16A34A) else OrangePrimary
+                                color = if (student.isCheckedIn) Color(0xFF10B981) else OrangePrimary
                             )
                         }
 
@@ -1549,19 +2225,19 @@ private fun StaffRosterTab(
                                     text = student.name,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
+                                    color = Color.White
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 if (student.isPureVeg) {
                                     Surface(
                                         shape = RoundedCornerShape(4.dp),
-                                        color = Color(0xFFDCFCE7)
+                                        color = Color(0xFF065F46)
                                     ) {
                                         Text(
                                             text = "VEG",
                                             fontSize = 8.sp,
                                             fontWeight = FontWeight.Black,
-                                            color = Color(0xFF16A34A),
+                                            color = Color(0xFF10B981),
                                             modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
                                         )
                                     }
@@ -1571,22 +2247,22 @@ private fun StaffRosterTab(
                             Text(
                                 text = "Roll: ${student.rollNo} • ${student.hostelBlock} Rm ${student.roomNo}",
                                 fontSize = 11.sp,
-                                color = TextSecondary
+                                color = Color(0xFF94A3B8)
                             )
 
                             Text(
-                                text = "${student.mealPlan} • Status: ${student.lastMeal}",
+                                text = "${student.mealPlan} • Wallet: Rs. ${student.walletCredits} • Status: ${student.lastMeal}",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = if (student.isCheckedIn) Color(0xFF16A34A) else Color(0xFF64748B)
+                                color = if (student.isCheckedIn) Color(0xFF10B981) else Color(0xFF64748B)
                             )
                         }
                     }
 
                     Surface(
                         shape = RoundedCornerShape(10.dp),
-                        color = if (student.isCheckedIn) Color(0xFFF1F5F9) else OrangeLight,
-                        border = BorderStroke(1.dp, if (student.isCheckedIn) Color(0xFFCBD5E1) else OrangePrimary),
+                        color = if (student.isCheckedIn) Color(0xFF0F172A) else OrangePrimary,
+                        border = BorderStroke(1.dp, if (student.isCheckedIn) Color(0xFF334155) else OrangePrimary),
                         modifier = Modifier.bouncyClick { onToggleCheckIn(student) }
                     ) {
                         Row(
@@ -1596,17 +2272,114 @@ private fun StaffRosterTab(
                             Icon(
                                 imageVector = if (student.isCheckedIn) Icons.Filled.Check else Icons.Filled.Add,
                                 contentDescription = null,
-                                tint = if (student.isCheckedIn) Color(0xFF64748B) else OrangePrimary,
+                                tint = if (student.isCheckedIn) Color(0xFF10B981) else Color.White,
                                 modifier = Modifier.size(12.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = if (student.isCheckedIn) "Checked In" else "Check In",
+                                text = if (student.isCheckedIn) "Verified" else "Check In",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (student.isCheckedIn) Color(0xFF64748B) else OrangePrimary
+                                color = if (student.isCheckedIn) Color(0xFF10B981) else Color.White
                             )
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AuditReportPreviewDialog(onDismiss: () -> Unit) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+            border = BorderStroke(1.dp, Color(0xFF334155))
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "CAMPUS AUDIT REPORT",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black,
+                            color = OrangePrimary,
+                            letterSpacing = 1.sp
+                        )
+                        Text(
+                            text = "Central Mess • EOD Reconciliation",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Filled.Close, contentDescription = "Close", tint = Color.White)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+                HorizontalDivider(color = Color(0xFF334155))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                listOf(
+                    "Total Meal Servings Verified" to "1,428 / 1,800",
+                    "Optical Gate Turnstile Swipes" to "1,284",
+                    "Mobile App Pre-Order Pickups" to "144",
+                    "Anti-Passback Fraud Interceptions" to "3 Attempted",
+                    "Food Wastage Prevented (kg)" to "33.8 kg",
+                    "Wastage Cost Saved (AI Forecast)" to "Rs. 14,850",
+                    "Prepaid Subscription Subsidies" to "Rs. 52,400",
+                    "Spot Digital Wallet & UPI" to "Rs. 43,150",
+                    "Gross Session Settlement" to "Rs. 95,550"
+                ).forEach { item ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = item.first, fontSize = 11.sp, color = Color(0xFF94A3B8))
+                        Text(text = item.second, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f).height(46.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, Color(0xFF64748B))
+                    ) {
+                        Icon(Icons.Outlined.Print, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Print Slip", fontSize = 11.sp, color = Color.White)
+                    }
+
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f).height(46.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)
+                    ) {
+                        Icon(Icons.Outlined.Download, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Export PDF", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
