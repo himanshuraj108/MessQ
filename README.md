@@ -60,4 +60,4 @@ Output APK will be generated at:
 
 ---
 
-*BitePass - Smart Campus Dining*
+*BitePass - Smart Campus Dining*  
