@@ -1,4 +1,4 @@
-## BitePass - Smart Campus Dining & Pass Management System
+# BitePass - Smart Campus Dining & Pass Management System
 
 A high-scale smart mess management, queue tracking, and meal pre-ordering Android application built with **Jetpack Compose**, **Firebase**, and **Groq AI (LLaMA 3.3)**. Designed to serve 40,000+ students and campus dining halls.
 
